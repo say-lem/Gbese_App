@@ -1,7 +1,9 @@
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import { UserModel, IUserDocument  } from '../Models';
-import { IUserResponse } from '../../../common/interfaces/user'; 
+import { IUserResponse } from '../../../common/interfaces/user';
+import { WalletService } from '../../wallet-management/services/wallet.service';
+import ApiError from '../../../utils/ApiError';
 
 const JWT_SECRET = process.env.JWT_SECRET || 'secret';
 
@@ -31,6 +33,7 @@ export class AuthService {
     });
 
     const savedUser = await newUser.save() as IUserDocument;
+    await WalletService.createWallet(savedUser._id); //create a wallet for the user
 
     const token = jwt.sign({ userId: savedUser._id }, JWT_SECRET, { expiresIn: '7d' });
 
@@ -54,10 +57,10 @@ export class AuthService {
     const { username, password } = loginData;
 
     const user = await UserModel.findOne({ username }) as IUserDocument;
-    if (!user) throw new Error('Invalid username or password');
+    if (!user) throw new ApiError('Invalid username or password', 404);
 
     const isMatch = await bcrypt.compare(password, user.passwordHash);
-    if (!isMatch) throw new Error('Invalid username or password');
+    if (!isMatch) throw new ApiError('Invalid username or password', 404);
 
     const token = jwt.sign({ userId: user._id }, JWT_SECRET, { expiresIn: '7d' });
 
