@@ -4,11 +4,14 @@ import dotenv from 'dotenv';
 import userRoutes from './routes/v1/user.routes';
 import transactionRoutes from './routes/v1/transaction.routes';
 import { errorHandler } from './middleware/error.middleware';
+import cookieParser from 'cookie-parser';
+
 
 dotenv.config();
 
 const app = express();
 
+app.use(cookieParser());
 app.use(cors()); 
 app.use(express.json()); 
 
