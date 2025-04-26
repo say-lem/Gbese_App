@@ -14,4 +14,3 @@ export interface IDebtTransferRequest {
     repaymentMethod?: 'one_time' | 'schedule_following_original_owner';
     isDeleted?: boolean;
   }
-  
