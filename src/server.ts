@@ -2,7 +2,10 @@ import app from './app';
 import { connectDB } from './database/db';
 import dotenv from 'dotenv';
 
-dotenv.config();
+// Determine the environment and load the corresponding file
+const envFile = process.env.NODE_ENV === "production" ? ".env" : ".env.local";
+dotenv.config({ path: envFile });
+
 
 const PORT = process.env.PORT || 5001;
 
