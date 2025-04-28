@@ -8,6 +8,7 @@ import {
   generateAccessToken,
   generateRefreshToken
 } from '../../../utils/auth.utils';
+import { generateWalletForUser } from './address.service';
 
 export class AuthService {
   // Register a new user
@@ -17,9 +18,10 @@ export class AuthService {
     email: string;
     phoneNumber?: string;
   }): Promise<{ accessToken: string; refreshToken: string; user: IUserResponse }> {
-    const { username, password, email, phoneNumber } = userData;
+    const { username, password, email, phoneNumber } = userData;    
 
     const existing = await UserModel.findOne({ $or: [{ username }, { email }] });
+    
     if (existing) throw new Error('Username or email already exists');
 
     const hashedPassword = await bcrypt.hash(password, 10);
@@ -33,8 +35,12 @@ export class AuthService {
       isKYCVerified: false,
       role: 'user'
     });
+        
+    const userWalletAddress = await generateWalletForUser(newUser._id.toString());
+    newUser.walletAddress = userWalletAddress.address; // Set the wallet address for the user
 
     const savedUser = await newUser.save() as IUserDocument;
+
     await WalletService.createWallet(savedUser._id); //create a wallet for the user
 
     const accessToken = generateAccessToken(savedUser._id.toString());
@@ -47,6 +53,7 @@ export class AuthService {
       phoneNumber: savedUser.phoneNumber,
       registrationDate: savedUser.registrationDate,
       baseCreditScore: savedUser.baseCreditScore,
+      walletAddress: savedUser.walletAddress,
       gbeseTokenBalance: savedUser.gbeseTokenBalance,
       role: savedUser.role,
       isKYCVerified: savedUser.isKYCVerified
@@ -75,6 +82,7 @@ export class AuthService {
       phoneNumber: user.phoneNumber,
       registrationDate: user.registrationDate,
       baseCreditScore: user.baseCreditScore,
+      walletAddress: user.walletAddress,
       gbeseTokenBalance: user.gbeseTokenBalance,
       role: user.role,
       isKYCVerified: user.isKYCVerified

@@ -5,12 +5,15 @@ import userRoutes from './routes/v1/user.routes';
 import transactionRoutes from './routes/v1/transaction.routes';
 import { errorHandler } from './middleware/error.middleware';
 import cookieParser from 'cookie-parser';
+import bodyParser from 'body-parser';
+
 
 
 dotenv.config();
 
 const app = express();
 
+app.use(bodyParser.json());
 app.use(cookieParser());
 app.use(cors()); 
 app.use(express.json()); 

@@ -21,6 +21,7 @@ const userSchema = new Schema<IUserDocument>({
   baseCreditScore: { type: Number, default: 500 },
   deviceFingerprints: [String],
   ipAddresses: [String],
+  walletAddress: {type: String, unique: true},
   gbeseTokenBalance: { type: Number, default: 0 },
   role: { type: String, enum: ['user', 'admin', 'lender'], default: 'user' },
   isKYCVerified: { type: Boolean, default: false },
