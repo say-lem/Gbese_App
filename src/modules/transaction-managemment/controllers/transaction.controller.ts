@@ -15,7 +15,7 @@ export class TransactionController {
 
   static async withdraw(req: AuthRequest, res: Response) {
     try {
-      const { amount } = req.body;
+      const { amount } = req.body;del
       const tx = await TransactionService.withdraw(req.userId!, amount);
       res.status(201).json(tx);
     } catch (error: any) {

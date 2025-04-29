@@ -20,6 +20,6 @@ const DebtTransferSchema = new Schema<IDebtTransferRequestDocument>({
     isDeleted: { type: Boolean, default: false }
 });
 
-const DebtTransferModel = mongoose.model<IDebtTransferRequest>('DebtTransfer', DebtTransferSchema);
+const DebtTransferModel = mongoose.model<IDebtTransferRequestDocument>('DebtTransfer', DebtTransferSchema);
 
 export { DebtTransferModel, IDebtTransferRequest };
