@@ -3,6 +3,7 @@ import cors from 'cors';
 import dotenv from 'dotenv';
 import userRoutes from './routes/v1/user.routes';
 import transactionRoutes from './routes/v1/transaction.routes';
+import { loanRequestRouter, loanOfferRouter, loanRouter, creditScoreRouter } from './routes/v1/credit-lending.routes';
 import { errorHandler } from './middleware/error.middleware';
 import cookieParser from 'cookie-parser';
 import bodyParser from 'body-parser';
@@ -20,6 +21,13 @@ app.use(express.json());
 
 app.use('/api/v1/users', userRoutes);
 app.use('/api/v1/transactions', transactionRoutes);
+
+// credit-lending routers
+app.use("/api/v1/loan-requests", loanRequestRouter);
+app.use("/api/v1/loan-offers", loanOfferRouter);
+app.use("/api/v1/loans", loanRouter);
+app.use("/api/v1/credit-scores", creditScoreRouter);
+
 app.get('/', (_req, res) => {
   res.send('Welcome to Gbese API'); 
 });

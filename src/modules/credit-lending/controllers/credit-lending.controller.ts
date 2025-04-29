@@ -3,16 +3,15 @@ import { AuthRequest } from "../../../middleware/auth.middleware";
 import LoanRepository from "../data-access/loan.repository";
 import LoanService from "../services/loan.service";
 import LenderService from "../services/lender.service";
+import CreditScoreService from "../services/credit-score.service";
 
 export default class CreditLendingController {
-	constructor(
-		private lenderService: LenderService,
-		private creditScoreService: any,
-		private loanService: LoanService,
-		private loanRepository: LoanRepository
-	) {}
+	private static lenderService: LenderService;
+	private static creditScoreService: CreditScoreService;
+	private static loanService: LoanService;
+	private static loanRepository: LoanRepository;
 
-	async createNewLoanRequest(req: AuthRequest, res: Response) {
+	static async createNewLoanRequest(req: AuthRequest, res: Response) {
 		try {
 			const userId = req.userId;
 			const { amount, term, interestRate } = req.body;
@@ -22,9 +21,8 @@ export default class CreditLendingController {
 				interestRate,
 			});
 			if (!loanRequest) {
-				return res
-					.status(400)
-					.json({ message: "Failed to create loan request" });
+				res.status(400).json({ message: "Failed to create loan request" });
+				return;
 			}
 			res.status(201).json(loanRequest);
 		} catch (error: any) {
@@ -32,19 +30,19 @@ export default class CreditLendingController {
 		}
 	}
 
-	async getLoanRequest(req: AuthRequest, res: Response) {
+	static async getLoanRequest(req: AuthRequest, res: Response) {
 		try {
 			const loanRequestId = req.params.loanRequestId;
 			const loanRequest = await this.loanRepository.getLoanRequestById(
 				loanRequestId
 			);
 			if (!loanRequest) {
-				return res.status(404).json({ message: "Loan request not found" });
+				res.status(404).json({ message: "Loan request not found" });
+				return;
 			}
 			if (loanRequest.isDeleted) {
-				return res
-					.status(400)
-					.json({ message: "Loan request has been deleted" });
+				res.status(400).json({ message: "Loan request has been deleted" });
+				return;
 			}
 			res.status(200).json(loanRequest);
 		} catch (error: any) {
@@ -52,7 +50,7 @@ export default class CreditLendingController {
 		}
 	}
 
-	async getUserLoanRequests(req: AuthRequest, res: Response) {
+	static async getUserLoanRequests(req: AuthRequest, res: Response) {
 		try {
 			const userId = req.userId;
 			const page = parseInt(req.query.page as string) || 1;
@@ -63,7 +61,8 @@ export default class CreditLendingController {
 				limit
 			);
 			if (!loanRequests) {
-				return res.status(404).json({ message: "No loan requests found" });
+				res.status(404).json({ message: "No loan requests found" });
+				return;
 			}
 			res.status(200).json(loanRequests);
 		} catch (error: any) {
@@ -71,7 +70,7 @@ export default class CreditLendingController {
 		}
 	}
 
-	async createLenderLoanOffer(req: AuthRequest, res: Response) {
+	static async createLenderLoanOffer(req: AuthRequest, res: Response) {
 		try {
 			const { userId, loanRequestId, terms, interestRate } = req.body;
 			const loanOffer = await this.lenderService.createLenderLoanOffer(
@@ -81,7 +80,8 @@ export default class CreditLendingController {
 				interestRate
 			);
 			if (!loanOffer) {
-				return res.status(400).json({ message: "Failed to create loan offer" });
+				res.status(400).json({ message: "Failed to create loan offer" });
+				return;
 			}
 			res.status(201).json(loanOffer);
 		} catch (error: any) {
@@ -89,47 +89,62 @@ export default class CreditLendingController {
 		}
 	}
 
-	async getLenderLoanOfferById(req: AuthRequest, res: Response) {
+	static async getLoanOfferById(req: AuthRequest, res: Response) {
 		try {
-			const userId = req.userId;
-			const page = parseInt(req.query.page as string) || 1;
-			const limit = parseInt(req.query.limit as string) || 10;
-			const loanOffers = await this.loanRepository.getLoanOfferByLoanRequestId(
-				userId!
+			const { loanOfferId } = req.params;
+			const data = await this.loanRepository.getLoanOfferById(
+				loanOfferId
 			);
-			if (!loanOffers) {
-				return res.status(404).json({ message: "No loan offers found" });
+			if (!data) {
+				res.status(404).json({ message: "No loan offers found" });
+				return;
 			}
-			res.status(200).json(loanOffers);
+			res.status(200).json(data);
 		} catch (error: any) {
 			res.status(500).json({ error: error.message });
 		}
 	}
 
-	async createLoan(req: any, res: any) {
+    static  async getLoanOfferByRequestId(req: AuthRequest, res: Response) {
+        try {
+            const { loanRequestId } = req.params;
+            const data = await this.loanRepository.getLoanOfferByLoanRequestId(loanRequestId);
+            if (!data) {
+                res.status(404).json({ message: "Loan offer not found" });
+                return;
+            }
+            res.status(200).json(data);
+        }
+        catch (error: any) {
+            res.status(500).json({ error: error.message });
+        }
+    }
+
+	static async createLoan(req: AuthRequest, res: Response) {
 		try {
 			const { loanRequestId, lenderId } = req.body;
 			if (!lenderId) {
-				return res.status(400).json({ message: "Lender ID is required" });
+				res.status(400).json({ message: "Lender ID is required" });
+				return;
 			}
 			if (!loanRequestId) {
-				return res.status(400).json({ message: "Loan request ID is required" });
+				res.status(400).json({ message: "Loan request ID is required" });
+				return;
 			}
 			const loanRequest = await this.loanRepository.getLoanRequestById(
 				loanRequestId
 			);
 			if (!loanRequest) {
-				return res.status(404).json({ message: "Loan request not found" });
+				res.status(404).json({ message: "Loan request not found" });
+				return;
 			}
 			if (loanRequest.status !== "approved") {
-				return res
-					.status(400)
-					.json({ message: "Loan request is not approved" });
+				res.status(400).json({ message: "Loan request is not approved" });
+				return;
 			}
 			if (loanRequest.isDeleted) {
-				return res
-					.status(400)
-					.json({ message: "Loan request has been deleted" });
+				res.status(400).json({ message: "Loan request has been deleted" });
+                return;
 			}
 			const data = await this.loanService.createBorrowerLoan(
 				lenderId,
@@ -141,12 +156,13 @@ export default class CreditLendingController {
 		}
 	}
 
-	async getLoanById(req: AuthRequest, res: Response) {
+	static async getLoanById(req: AuthRequest, res: Response) {
 		try {
 			const { loanId } = req.params;
 			const data = await this.loanRepository.getLoanById(loanId);
 			if (!data) {
-				return res.status(404).json({ message: "Loan not found" });
+                res.status(404).json({ message: "Loan not found" });
+                return;
 			}
 			res.status(200).json(data);
 		} catch (error: any) {
@@ -154,21 +170,23 @@ export default class CreditLendingController {
 		}
 	}
 
-	async getLenderLoans(req: AuthRequest, res: Response) {
+	static async getLenderLoans(req: AuthRequest, res: Response) {
 		try {
 			const userId = req.userId;
 			const page = parseInt(req.query.page as string) || 1;
 			const limit = parseInt(req.query.limit as string) || 10;
 			const data = await this.loanRepository.getUserLoans(userId!, page, limit);
 			if (!data) {
-				return res.status(404).json({ message: "No loans found" });
+				res.status(404).json({ message: "No loans found" });
+                return;
 			}
 			res.status(200).json(data);
 		} catch (error: any) {
 			res.status(500).json({ error: error.message });
 		}
 	}
-	async getCreditScore(req: AuthRequest, res: Response) {
+
+	static async getCreditScoreByUserId(req: AuthRequest, res: Response) {
 		try {
 			const { userId } = req.params;
 			const creditScore = await this.creditScoreService.getCreditScore(userId);
