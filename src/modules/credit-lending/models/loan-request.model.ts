@@ -18,6 +18,7 @@ const loanRequestSchema = new Schema<ILoanRequestDocument>({
         transform: (doc, ret) => {
             delete ret._id; // Remove the default _id field
             delete ret.__v; // Remove the version key
+            delete ret.isDeleted; // Remove the isDeleted field from the response
         }
     },
     toObject: {
