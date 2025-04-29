@@ -3,9 +3,8 @@ import LoanRepository from "../data-access/loan.repository";
 import { ILoanRequest } from "../../../common/interfaces/loanRequest";
 
 export default class LoanService {
-	constructor(private loanRepository: LoanRepository) {}
-
-    async createBorrowerLoan(lenderId: string, loanRequest: Partial<ILoanRequest>) {
+	
+    static async createBorrowerLoan(lenderId: string, loanRequest: Partial<ILoanRequest>) {
         if (!lenderId) {
             throw new Error("user is not authorized to create a loan");
         }
@@ -18,7 +17,7 @@ export default class LoanService {
         if (loanRequest.isDeleted) {
             throw new Error("Loan request has been deleted");
         }
-        const loan = await this.loanRepository.createLoan({
+        const loan = await LoanRepository.createLoan({
 			borrowerId: loanRequest.userId!.toString(),
 			lenderId: lenderId,
 			principalAmount: loanRequest.amount,

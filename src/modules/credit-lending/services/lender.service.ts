@@ -2,12 +2,8 @@ import { Types } from "mongoose";
 import LoanRepository from "../data-access/loan.repository";
 
 export default class LenderService {
-    
-	constructor(
-		private loanRepository: LoanRepository
-	) {}
 
-	async createLenderLoanOffer(
+	static async createLenderLoanOffer(
 		userId: string,
 		loanRequestId: string | Types.ObjectId,
 		terms: number,
@@ -16,7 +12,7 @@ export default class LenderService {
 		if (!userId) {
 			throw new Error("User is not authorized to create a loan offer");
 		}
-		const loanRequest = await this.loanRepository.getLoanRequestById(
+		const loanRequest = await LoanRepository.getLoanRequestById(
 			loanRequestId.toString()
 		);
 		if (!loanRequest) {
@@ -31,7 +27,7 @@ export default class LenderService {
 		}
 
 		// check if loan offer already exists for this request
-		const loanOffer = await this.loanRepository.getLoanOfferByLoanRequestId(
+		const loanOffer = await LoanRepository.getLoanOfferByLoanRequestId(
 			loanRequestId.toString()
 		);
 
@@ -40,7 +36,7 @@ export default class LenderService {
 		}
 
 		// Create a new loan offer
-		const newLoanOffer = await this.loanRepository.createLoanOffer(userId, {
+		const newLoanOffer = await LoanRepository.createLoanOffer(userId, {
 			loanRequestId: loanRequestId as Types.ObjectId,
 			terms,
 			interestRate,
@@ -50,14 +46,14 @@ export default class LenderService {
 		return newLoanOffer;
 	}
 
-	async approveLoanRequest(
+	static async approveLoanRequest(
 		userId: string,
 		loanRequestId: string | Types.ObjectId
 	) {
 		if (!userId) {
 			throw new Error("User is not authorized to this loan request");
 		}
-		const loanRequest = await this.loanRepository.getLoanRequestById(
+		const loanRequest = await LoanRepository.getLoanRequestById(
 			loanRequestId.toString()
 		);
 		if (!loanRequest) {
@@ -72,7 +68,7 @@ export default class LenderService {
 		}
 
 		// check if loan offer already exists for this request
-		const loanOffer = await this.loanRepository.getLoanOfferByLoanRequestId(
+		const loanOffer = await LoanRepository.getLoanOfferByLoanRequestId(
 			loanRequestId.toString()
 		);
 
@@ -80,7 +76,7 @@ export default class LenderService {
 			throw new Error("Loan offer not found for this request");
 		}
 		// Create a new loan offer
-		const updatedLoanOffer = await this.loanRepository.updateLoanOfferStatus(
+		const updatedLoanOffer = await LoanRepository.updateLoanOfferStatus(
 			loanOffer.loanOfferId.toString(),
 			"approved"
 		);
@@ -89,7 +85,7 @@ export default class LenderService {
             throw new Error("Failed to approve loan offer");
         }
 
-        const updatedLoanRequest = await this.loanRepository.updateLoanRequestStatus(
+        const updatedLoanRequest = await LoanRepository.updateLoanRequestStatus(
             loanRequestId.toString(),
             "approved"
         );

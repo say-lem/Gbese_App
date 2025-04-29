@@ -1,20 +1,21 @@
-export default class CreditScoreRepository {
-    constructor(private creditScoreModel: any) {}
+import { CreditScoreModel } from "../models";
 
-    async getCreditScore(userId: string) {
-        return this.creditScoreModel.findOne({ userId }).exec();
+export default class CreditScoreRepository {
+    
+    static async getCreditScore(userId: string) {
+        return CreditScoreModel.findOne({ userId }).exec();
     }
 
-    async updateCreditScore(userId: string, score: number) {
-        return this.creditScoreModel.findOneAndUpdate(
+    static async updateCreditScore(userId: string, score: number) {
+        return CreditScoreModel.findOneAndUpdate(
             { userId },
             { score, lastUpdated: new Date() },
             { new: true }
         ).exec();
     }
 
-    async addCreditScoreHistory(userId: string, score: number) {
-        return this.creditScoreModel.findOneAndUpdate(
+    static async addCreditScoreHistory(userId: string, score: number) {
+        return CreditScoreModel.findOneAndUpdate(
             { userId },
             { $push: { history: { date: new Date(), score } } },
             { new: true }

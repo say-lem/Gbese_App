@@ -7,15 +7,9 @@ import { LoanRequestModel } from "../models/loan-request.model";
 import { paginate } from "../../../utils/Paginate";
 
 export default class LoanRepository {
-	constructor(
-		private loanModel: typeof LoanModel,
-		private loanOffer: typeof LoanOfferModel,
-		private loanRequest: typeof LoanRequestModel
-	) {}
-
 	// Loan Request Methods
-	async createLoanRequest(userId: string, data: Partial<ILoanRequest>) {
-		return await this.loanRequest.create({
+	static async createLoanRequest(userId: string, data: Partial<ILoanRequest>) {
+		return await LoanRequestModel.create({
 			userId,
 			amount: data.amount,
 			interestRate: data.interestRate,
@@ -25,26 +19,26 @@ export default class LoanRepository {
 		});
 	}
 
-	async getLoanRequestById(loanRequestId: string) {
-		return this.loanRequest.findById(loanRequestId).exec();
+	static async getLoanRequestById(loanRequestId: string) {
+		return LoanRequestModel.findById(loanRequestId).exec();
 	}
 
-	async getUserLoanRequests(userId: string, page: number, limit: number) {
-		return await paginate(this.loanRequest, page, limit, {
+	static async getUserLoanRequests(userId: string, page: number, limit: number) {
+		return await paginate(LoanRequestModel, page, limit, {
 			userId,
 			isDeleted: false,
 		});
 	}
 
-    async updateLoanRequestStatus(loanRequestId: string, status: string) {
-        return this.loanRequest
+    static async updateLoanRequestStatus(loanRequestId: string, status: string) {
+        return LoanRequestModel
             .findByIdAndUpdate(loanRequestId, { $set: { status } }, { new: true })
 			.exec();
         }
 
 	// Loan Offer Methods
-	async createLoanOffer(userId: string, data: Partial<ILoanOffer>) {
-		return await this.loanOffer.create({
+	static async createLoanOffer(userId: string, data: Partial<ILoanOffer>) {
+		return await LoanOfferModel.create({
 			loanRequestId: data.loanRequestId,
 			lenderId: userId,
 			terms: data.terms,
@@ -54,23 +48,23 @@ export default class LoanRepository {
 		});
 	}
 
-	async getLoanOfferById(loanOfferId: string) {
-		return this.loanOffer.findById(loanOfferId).exec();
+	static async getLoanOfferById(loanOfferId: string) {
+		return LoanOfferModel.findById(loanOfferId).exec();
 	}
 
-    async getLoanOfferByLoanRequestId(loanRequestId: string) {
-        return this.loanOffer.findOne({ loanRequestId }).exec();
+    static async getLoanOfferByLoanRequestId(loanRequestId: string) {
+        return LoanOfferModel.findOne({ loanRequestId }).exec();
     }
-	async updateLoanOfferStatus(loanOfferId: string, status: string) {
-		return this.loanOffer
+	static async updateLoanOfferStatus(loanOfferId: string, status: string) {
+		return LoanOfferModel
 			.findByIdAndUpdate(loanOfferId, { $set: { status } }, { new: true })
 			.exec();
 	}
 
 
 	// Loan Methods
-	async createLoan(data: Partial<ILoan>) {
-		return await this.loanModel.create({
+	static async createLoan(data: Partial<ILoan>) {
+		return await LoanModel.create({
 			borrowerId: data.borrowerId,
 			lenderId: data.lenderId,
 			principalAmount: data.principalAmount,
@@ -90,19 +84,19 @@ export default class LoanRepository {
 		});
 	}
 
-	async getLoanById(loanId: string) {
-		return this.loanModel.findById(loanId).exec();
+	static async getLoanById(loanId: string) {
+		return LoanModel.findById(loanId).exec();
 	}
 
-	async getUserLoans(userId: string, page: number, limit: number) {
-		return await paginate(this.loanModel, page, limit, {
+	static async getUserLoans(userId: string, page: number, limit: number) {
+		return await paginate(LoanModel, page, limit, {
 			$or: [{ borrowerId: userId }, { lenderId: userId }],
 			isDeleted: false,
 		});
 	}
 
-	async UpdateLoan(loanId: string, data: Partial<ILoan>) {
-		return this.loanModel.findByIdAndUpdate(
+	static async UpdateLoan(loanId: string, data: Partial<ILoan>) {
+		return await LoanModel.findByIdAndUpdate(
 			loanId,
 			{ $set: data },
 			{ new: true }

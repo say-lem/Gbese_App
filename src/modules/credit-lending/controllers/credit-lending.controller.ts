@@ -4,18 +4,16 @@ import LoanRepository from "../data-access/loan.repository";
 import LoanService from "../services/loan.service";
 import LenderService from "../services/lender.service";
 import CreditScoreService from "../services/credit-score.service";
+import app from "../../../app";
 
 export default class CreditLendingController {
-	private static lenderService: LenderService;
-	private static creditScoreService: CreditScoreService;
-	private static loanService: LoanService;
-	private static loanRepository: LoanRepository;
+
 
 	static async createNewLoanRequest(req: AuthRequest, res: Response) {
 		try {
 			const userId = req.userId;
 			const { amount, term, interestRate } = req.body;
-			const loanRequest = await this.loanRepository.createLoanRequest(userId!, {
+			const loanRequest = await LoanRepository.createLoanRequest(userId!, {
 				amount,
 				term,
 				interestRate,
@@ -33,7 +31,7 @@ export default class CreditLendingController {
 	static async getLoanRequest(req: AuthRequest, res: Response) {
 		try {
 			const loanRequestId = req.params.loanRequestId;
-			const loanRequest = await this.loanRepository.getLoanRequestById(
+			const loanRequest = await LoanRepository.getLoanRequestById(
 				loanRequestId
 			);
 			if (!loanRequest) {
@@ -55,7 +53,7 @@ export default class CreditLendingController {
 			const userId = req.userId;
 			const page = parseInt(req.query.page as string) || 1;
 			const limit = parseInt(req.query.limit as string) || 10;
-			const loanRequests = await this.loanRepository.getUserLoanRequests(
+			const loanRequests = await LoanRepository.getUserLoanRequests(
 				userId!,
 				page,
 				limit
@@ -72,9 +70,10 @@ export default class CreditLendingController {
 
 	static async createLenderLoanOffer(req: AuthRequest, res: Response) {
 		try {
-			const { userId, loanRequestId, terms, interestRate } = req.body;
-			const loanOffer = await this.lenderService.createLenderLoanOffer(
-				userId,
+			const userId = req.userId;
+			const { loanRequestId, terms, interestRate } = req.body;
+			const loanOffer = await LenderService.createLenderLoanOffer(
+				userId!,
 				loanRequestId,
 				terms,
 				interestRate
@@ -83,7 +82,12 @@ export default class CreditLendingController {
 				res.status(400).json({ message: "Failed to create loan offer" });
 				return;
 			}
-			res.status(201).json(loanOffer);
+			const approvedLoanRequest = await LenderService.approveLoanRequest(userId!, loanOffer.loanRequestId);
+			if (!approvedLoanRequest) {
+				res.status(400).json({ message: "Failed to approve loan request" });
+				return;
+			}
+			res.status(201).json(approvedLoanRequest);
 		} catch (error: any) {
 			res.status(500).json({ error: error.message });
 		}
@@ -92,7 +96,7 @@ export default class CreditLendingController {
 	static async getLoanOfferById(req: AuthRequest, res: Response) {
 		try {
 			const { loanOfferId } = req.params;
-			const data = await this.loanRepository.getLoanOfferById(
+			const data = await LoanRepository.getLoanOfferById(
 				loanOfferId
 			);
 			if (!data) {
@@ -108,7 +112,7 @@ export default class CreditLendingController {
     static  async getLoanOfferByRequestId(req: AuthRequest, res: Response) {
         try {
             const { loanRequestId } = req.params;
-            const data = await this.loanRepository.getLoanOfferByLoanRequestId(loanRequestId);
+            const data = await LoanRepository.getLoanOfferByLoanRequestId(loanRequestId);
             if (!data) {
                 res.status(404).json({ message: "Loan offer not found" });
                 return;
@@ -131,7 +135,7 @@ export default class CreditLendingController {
 				res.status(400).json({ message: "Loan request ID is required" });
 				return;
 			}
-			const loanRequest = await this.loanRepository.getLoanRequestById(
+			const loanRequest = await LoanRepository.getLoanRequestById(
 				loanRequestId
 			);
 			if (!loanRequest) {
@@ -146,7 +150,7 @@ export default class CreditLendingController {
 				res.status(400).json({ message: "Loan request has been deleted" });
                 return;
 			}
-			const data = await this.loanService.createBorrowerLoan(
+			const data = await LoanService.createBorrowerLoan(
 				lenderId,
 				loanRequest!
 			);
@@ -159,7 +163,7 @@ export default class CreditLendingController {
 	static async getLoanById(req: AuthRequest, res: Response) {
 		try {
 			const { loanId } = req.params;
-			const data = await this.loanRepository.getLoanById(loanId);
+			const data = await LoanRepository.getLoanById(loanId);
 			if (!data) {
                 res.status(404).json({ message: "Loan not found" });
                 return;
@@ -175,7 +179,7 @@ export default class CreditLendingController {
 			const userId = req.userId;
 			const page = parseInt(req.query.page as string) || 1;
 			const limit = parseInt(req.query.limit as string) || 10;
-			const data = await this.loanRepository.getUserLoans(userId!, page, limit);
+			const data = await LoanRepository.getUserLoans(userId!, page, limit);
 			if (!data) {
 				res.status(404).json({ message: "No loans found" });
                 return;
@@ -189,7 +193,7 @@ export default class CreditLendingController {
 	static async getCreditScoreByUserId(req: AuthRequest, res: Response) {
 		try {
 			const { userId } = req.params;
-			const creditScore = await this.creditScoreService.getCreditScore(userId);
+			const creditScore = await CreditScoreService.getCreditScore(userId);
 			res.status(200).json(creditScore);
 		} catch (error: any) {
 			res.status(500).json({ error: error.message });
