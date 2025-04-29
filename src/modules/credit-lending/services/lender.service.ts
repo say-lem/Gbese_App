@@ -1,21 +1,103 @@
+import { Types } from "mongoose";
+import LoanRepository from "../data-access/loan.repository";
+
 export default class LenderService {
-    constructor(
-        private lenderRepository: any,
-        private loanRepository: any,
-        private creditScoreRepository: any
-    ) {}
+    
+	constructor(
+		private loanRepository: LoanRepository
+	) {}
 
-    async approveLoan(loanId: string, amount: number) {
-        const loan = await this.loanRepository.getLoanById(loanId);
-        if (!loan) {
-            throw new Error('Loan not found');
+	async createLenderLoanOffer(
+		userId: string,
+		loanRequestId: string | Types.ObjectId,
+		terms: number,
+		interestRate: number
+	) {
+		if (!userId) {
+			throw new Error("User is not authorized to create a loan offer");
+		}
+		const loanRequest = await this.loanRepository.getLoanRequestById(
+			loanRequestId.toString()
+		);
+		if (!loanRequest) {
+			throw new Error("Loan request not found");
+		}
+		if (loanRequest.status !== "pending") {
+			throw new Error("Loan request has been processed already");
+		}
+
+		if (loanRequest.isDeleted) {
+			throw new Error("Loan request has been deleted");
+		}
+
+		// check if loan offer already exists for this request
+		const loanOffer = await this.loanRepository.getLoanOfferByLoanRequestId(
+			loanRequestId.toString()
+		);
+
+		if (loanOffer) {
+			throw new Error("Loan offer already exists for this request");
+		}
+
+		// Create a new loan offer
+		const newLoanOffer = await this.loanRepository.createLoanOffer(userId, {
+			loanRequestId: loanRequestId as Types.ObjectId,
+			terms,
+			interestRate,
+			status: "pending",
+		});
+
+		return newLoanOffer;
+	}
+
+	async approveLoanRequest(
+		userId: string,
+		loanRequestId: string | Types.ObjectId
+	) {
+		if (!userId) {
+			throw new Error("User is not authorized to this loan request");
+		}
+		const loanRequest = await this.loanRepository.getLoanRequestById(
+			loanRequestId.toString()
+		);
+		if (!loanRequest) {
+			throw new Error("Loan request not found");
+		}
+		if (loanRequest.status !== "pending") {
+			throw new Error("Loan request has been processed already");
+		}
+
+		if (loanRequest.isDeleted) {
+			throw new Error("Loan request has been deleted");
+		}
+
+		// check if loan offer already exists for this request
+		const loanOffer = await this.loanRepository.getLoanOfferByLoanRequestId(
+			loanRequestId.toString()
+		);
+
+		if (!loanOffer) {
+			throw new Error("Loan offer not found for this request");
+		}
+		// Create a new loan offer
+		const updatedLoanOffer = await this.loanRepository.updateLoanOfferStatus(
+			loanOffer.loanOfferId.toString(),
+			"approved"
+		);
+
+        if (!updatedLoanOffer) {
+            throw new Error("Failed to approve loan offer");
         }
 
-        const creditScore = await this.creditScoreRepository.getCreditScore(loan.userId);
-        if (!creditScore || creditScore.score < 600) {
-            throw new Error('Insufficient credit score');
-        }
+        const updatedLoanRequest = await this.loanRepository.updateLoanRequestStatus(
+            loanRequestId.toString(),
+            "approved"
+        );
 
-        return this.lenderRepository.approveLoan(loanId, amount);
-    }
+		if (!updatedLoanRequest) {
+            throw new Error("Failed to approve loan request");
+		}
+
+        return updatedLoanRequest;
+	}
 }

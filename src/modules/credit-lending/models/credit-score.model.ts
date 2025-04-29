@@ -13,6 +13,9 @@ const creditScoreSchema = new Schema<ICreditScoreDocument>({
             score: { type: Number, required: true },
         },
     ],
+    timestamp: { type: Date, default: Date.now },
+    scoreChange: { type: Number, default: 0 },
+    reason: { type: String, default: "" },
     isDeleted: { type: Boolean, default: false },
 }, {
     _id: false,

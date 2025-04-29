@@ -1,7 +1,8 @@
+import CreditScoreRepository from "../data-access/credit-score.repository";
+
 export default class CreditScoreService {
     constructor(
-        private creditScoreRepository: any,
-        private userRepository: any
+        private creditScoreRepository: CreditScoreRepository,
     ) {}
 
     async getCreditScore(userId: string) {
