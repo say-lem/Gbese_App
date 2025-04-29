@@ -16,6 +16,7 @@ const loanRequestSchema = new Schema<ILoanRequestDocument>({
     toJSON: {
         virtuals: true,
         transform: (doc, ret) => {
+            delete ret.id; // Remove the virtual id field
             delete ret._id; // Remove the default _id field
             delete ret.__v; // Remove the version key
             delete ret.isDeleted; // Remove the isDeleted field from the response
@@ -23,6 +24,9 @@ const loanRequestSchema = new Schema<ILoanRequestDocument>({
     },
     toObject: {
         virtuals: true,
+        transform: (doc, ret) => {
+            delete ret.id; // Remove the virtual id field
+        }
     },
 });
 

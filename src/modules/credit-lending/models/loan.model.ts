@@ -37,12 +37,16 @@ const loanSchema = new Schema<ILoanDocument>(
 		toJSON: {
 			virtuals: true,
 			transform: (doc, ret) => {
+                delete ret.id; // Remove the virtual id field
 				delete ret._id; // Remove the default _id field
 				delete ret.__v; // Remove the version key
 			},
 		},
 		toObject: {
 			virtuals: true,
+            transform: (doc, ret) => {
+                delete ret.id; // Remove the virtual id field
+            }
 		},
 	}
 );
