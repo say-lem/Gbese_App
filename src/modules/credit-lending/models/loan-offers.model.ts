@@ -17,7 +17,6 @@ const loanOfferSchema = new Schema<ILoanOfferDocument>({
         virtuals: true,
         transform: (doc, ret) => {
             delete ret.id; // Remove the virtual id field
-            delete ret.id; // Remove the default id field
             delete ret._id; // Remove the default _id field
             delete ret.__v; // Remove the version key
         }
