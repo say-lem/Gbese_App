@@ -1,9 +1,7 @@
+import { LoanModel, LoanOfferModel, LoanRequestModel } from "../models/index";
 import { ILoan } from "./../../../common/interfaces/loan";
-import { LoanModel } from "../models";
-import { LoanOfferModel } from "../models/loan-offers.model";
 import { ILoanOffer } from "../../../common/interfaces/loanOffer";
 import { ILoanRequest } from "../../../common/interfaces/loanRequest";
-import { LoanRequestModel } from "../models/loan-request.model";
 import { paginate } from "../../../utils/Paginate";
 
 export default class LoanRepository {
@@ -23,18 +21,24 @@ export default class LoanRepository {
 		return LoanRequestModel.findById(loanRequestId).exec();
 	}
 
-	static async getUserLoanRequests(userId: string, page: number, limit: number) {
+	static async getUserLoanRequests(
+		userId: string,
+		page: number,
+		limit: number
+	) {
 		return await paginate(LoanRequestModel, page, limit, {
 			userId,
 			isDeleted: false,
 		});
 	}
 
-    static async updateLoanRequestStatus(loanRequestId: string, status: string) {
-        return LoanRequestModel
-            .findByIdAndUpdate(loanRequestId, { $set: { status } }, { new: true })
-			.exec();
-        }
+	static async updateLoanRequestStatus(loanRequestId: string, status: string) {
+		return LoanRequestModel.findByIdAndUpdate(
+			loanRequestId,
+			{ $set: { status } },
+			{ new: true }
+		).exec();
+	}
 
 	// Loan Offer Methods
 	static async createLoanOffer(userId: string, data: Partial<ILoanOffer>) {
@@ -52,15 +56,16 @@ export default class LoanRepository {
 		return LoanOfferModel.findById(loanOfferId).exec();
 	}
 
-    static async getLoanOfferByLoanRequestId(loanRequestId: string) {
-        return LoanOfferModel.findOne({ loanRequestId }).exec();
-    }
-	static async updateLoanOfferStatus(loanOfferId: string, status: string) {
-		return LoanOfferModel
-			.findByIdAndUpdate(loanOfferId, { $set: { status } }, { new: true })
-			.exec();
+	static async getLoanOfferByLoanRequestId(loanRequestId: string) {
+		return LoanOfferModel.findOne({ loanRequestId }).exec();
 	}
-
+	static async updateLoanOfferStatus(loanOfferId: string, status: string) {
+		return LoanOfferModel.findByIdAndUpdate(
+			loanOfferId,
+			{ $set: { status } },
+			{ new: true }
+		).exec();
+	}
 
 	// Loan Methods
 	static async createLoan(data: Partial<ILoan>) {

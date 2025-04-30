@@ -6,7 +6,6 @@ import transactionRoutes from './routes/v1/transaction.routes';
 import { loanRequestRouter, loanOfferRouter, loanRouter, creditScoreRouter } from './routes/v1/credit-lending.routes';
 import { errorHandler } from './middleware/error.middleware';
 import cookieParser from 'cookie-parser';
-import bodyParser from 'body-parser';
 
 
 
@@ -14,10 +13,11 @@ dotenv.config();
 
 const app = express();
 
-app.use(bodyParser.json());
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
-app.use(cors()); 
-app.use(express.json()); 
+app.use(cors());
+
 
 app.use('/api/v1/users', userRoutes);
 app.use('/api/v1/transactions', transactionRoutes);
