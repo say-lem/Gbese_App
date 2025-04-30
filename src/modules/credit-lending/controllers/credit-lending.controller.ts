@@ -3,7 +3,7 @@ import { AuthRequest } from "../../../middleware/auth.middleware";
 import LoanRepository from "../data-access/loan.repository";
 import LoanService from "../services/loan.service";
 import LenderService from "../services/lender.service";
-import CreditScoreService from "../services/credit-score.service";
+import CreditScoreService from "../../reputation-credit-scoring/services/credit-score.service";
 import ApiError from "../../../utils/ApiError";
 
 export default class CreditLendingController {

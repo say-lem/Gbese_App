@@ -1,4 +1,4 @@
-import { CreditScoreModel } from "../models";
+import { CreditScoreModel } from "../models/index";
 
 export default class CreditScoreRepository {
     
