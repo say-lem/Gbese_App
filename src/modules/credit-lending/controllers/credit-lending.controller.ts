@@ -160,6 +160,14 @@ export default class CreditLendingController {
 				lenderId,
 				loanRequest!
 			);
+			const updateFiatBalances = await LoanService.updateFiatBalances(
+				lenderId,
+				loanRequest.userId!.toString(),
+				loanRequest.amount!
+			);
+
+			// const updateTransactionHistory = await LoanService.updateTransactionHistory();
+	
 			res.status(200).json({ message: "Loan created successfully", data });
 		} catch (error) {
 			if (error instanceof ApiError) {

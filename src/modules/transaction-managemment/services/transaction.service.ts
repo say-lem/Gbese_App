@@ -35,6 +35,8 @@ export class TransactionService {
     return transaction.save();
   }
 
+  
+
   static async getTransactionHistory(userId: string) {
     return TransactionModel.find({ userId }).sort({ timestamp: -1 });
   }
