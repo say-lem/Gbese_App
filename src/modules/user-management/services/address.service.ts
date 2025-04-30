@@ -1,10 +1,6 @@
 import { ethers } from "ethers";
 import crypto from "crypto";
-require("dotenv").config();
-
-const MASTER_MNEMONIC =
-  process.env.MASTER_MNEMONIC ||
-  "test test test test test test test test test test test junk";
+import { MASTER_MNEMONIC } from "../../../config/constants";
 
 // Create the master HD node
 const masterNode = ethers.HDNodeWallet.fromPhrase(MASTER_MNEMONIC);
