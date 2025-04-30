@@ -3,4 +3,4 @@ import { DebtController } from '../../modules/debt-transfer-protocol/controllers
 
 const router = Router();
 
-router.get('/getAllDebtTransfers', DebtController.getAllDebtTransfers);
+router.get('/:userId', DebtController.getUserDebtTransfers);
