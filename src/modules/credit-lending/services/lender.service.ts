@@ -1,5 +1,6 @@
 import { Types } from "mongoose";
 import LoanRepository from "../data-access/loan.repository";
+import ApiError from "../../../utils/ApiError";
 
 export default class LenderService {
 
@@ -10,20 +11,20 @@ export default class LenderService {
 		interestRate: number
 	) {
 		if (!userId) {
-			throw new Error("User is not authorized to create a loan offer");
+			throw new ApiError("User is not authorized to create a loan offer", 400);
 		}
 		const loanRequest = await LoanRepository.getLoanRequestById(
 			loanRequestId.toString()
 		);
 		if (!loanRequest) {
-			throw new Error("Loan request not found");
+			throw new ApiError("Loan request not found", 404);
 		}
 		if (loanRequest.status !== "pending") {
-			throw new Error("Loan request has been processed already");
+			throw new ApiError("Loan request has been processed already", 400);
 		}
 
 		if (loanRequest.isDeleted) {
-			throw new Error("Loan request has been deleted");
+			throw new ApiError("Loan request has been deleted", 400);
 		}
 
 		// check if loan offer already exists for this request
@@ -32,7 +33,7 @@ export default class LenderService {
 		);
 
 		if (loanOffer) {
-			throw new Error("Loan offer already exists for this request");
+			throw new ApiError("Loan offer already exists for this request", 400);
 		}
 
 		// Create a new loan offer
@@ -51,20 +52,20 @@ export default class LenderService {
 		loanRequestId: string | Types.ObjectId
 	) {
 		if (!userId) {
-			throw new Error("User is not authorized to this loan request");
+			throw new ApiError("User is not authorized to this loan request", 400);
 		}
 		const loanRequest = await LoanRepository.getLoanRequestById(
 			loanRequestId.toString()
 		);
 		if (!loanRequest) {
-			throw new Error("Loan request not found");
+			throw new ApiError("Loan request not found", 404);
 		}
 		if (loanRequest.status !== "pending") {
-			throw new Error("Loan request has been processed already");
+			throw new ApiError("Loan request has been processed already", 400);
 		}
 
 		if (loanRequest.isDeleted) {
-			throw new Error("Loan request has been deleted");
+			throw new ApiError("Loan request has been deleted", 400);
 		}
 
 		// check if loan offer already exists for this request
@@ -73,7 +74,7 @@ export default class LenderService {
 		);
 
 		if (!loanOffer) {
-			throw new Error("Loan offer not found for this request");
+			throw new ApiError("Loan offer not found for this request", 404);
 		}
 		// Create a new loan offer
 		const updatedLoanOffer = await LoanRepository.updateLoanOfferStatus(
@@ -82,7 +83,7 @@ export default class LenderService {
 		);
 
         if (!updatedLoanOffer) {
-            throw new Error("Failed to approve loan offer");
+            throw new ApiError("Failed to approve loan offer", 400);
         }
 
         const updatedLoanRequest = await LoanRepository.updateLoanRequestStatus(
@@ -91,7 +92,7 @@ export default class LenderService {
         );
 
 		if (!updatedLoanRequest) {
-            throw new Error("Failed to approve loan request");
+            throw new ApiError("Failed to approve loan request", 400);
 		}
 
         return updatedLoanRequest;

@@ -1,15 +1,11 @@
 import express from 'express';
 import cors from 'cors';
-import dotenv from 'dotenv';
 import userRoutes from './routes/v1/user.routes';
 import transactionRoutes from './routes/v1/transaction.routes';
 import { loanRequestRouter, loanOfferRouter, loanRouter, creditScoreRouter } from './routes/v1/credit-lending.routes';
-import { errorHandler } from './middleware/error.middleware';
+import { errorHandler, notFound } from './middleware/error.middleware';
 import cookieParser from 'cookie-parser';
 
-
-
-dotenv.config();
 
 const app = express();
 
@@ -31,6 +27,8 @@ app.use("/api/v1/credit-scores", creditScoreRouter);
 app.get('/', (_req, res) => {
   res.send('Welcome to Gbese API'); 
 });
+
+app.use(notFound);
 
 app.use(errorHandler);
 

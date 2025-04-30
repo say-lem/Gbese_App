@@ -4,12 +4,12 @@ import LoanRepository from "../data-access/loan.repository";
 import LoanService from "../services/loan.service";
 import LenderService from "../services/lender.service";
 import CreditScoreService from "../services/credit-score.service";
-import app from "../../../app";
+import ApiError from "../../../utils/ApiError";
 
 export default class CreditLendingController {
 
 
-	static async createNewLoanRequest(req: AuthRequest, res: Response) {
+	static async createNewLoanRequest(req: AuthRequest, res: Response, next: NextFunction) {
 		try {
 			const userId = req.userId;
 			const { amount, term, interestRate } = req.body;
@@ -19,16 +19,18 @@ export default class CreditLendingController {
 				interestRate,
 			});
 			if (!loanRequest) {
-				res.status(400).json({ message: "Failed to create loan request" });
-				return;
+				return next(new ApiError("Failed to create loan request", 400));
 			}
 			res.status(201).json(loanRequest);
-		} catch (error: any) {
-			res.status(500).json({ error: error.message });
+		} catch (error) {
+			if (error instanceof ApiError) {
+				return next(new ApiError(error.message, error.statusCode));
+			}
+			return next(new ApiError("Internal Server Error", 500));
 		}
 	}
 
-	static async getLoanRequest(req: AuthRequest, res: Response) {
+	static async getLoanRequest(req: AuthRequest, res: Response, next: NextFunction) {
 		try {
 			const loanRequestId = req.params.loanRequestId;
 			const loanRequest = await LoanRepository.getLoanRequestById(
@@ -43,12 +45,15 @@ export default class CreditLendingController {
 				return;
 			}
 			res.status(200).json(loanRequest);
-		} catch (error: any) {
-			res.status(500).json({ error: error.message });
+		} catch (error) {
+			if (error instanceof ApiError) {
+				return next(new ApiError(error.message, error.statusCode));
+			}
+			return next(new ApiError("Internal Server Error", 500));
 		}
 	}
 
-	static async getUserLoanRequests(req: AuthRequest, res: Response) {
+	static async getUserLoanRequests(req: AuthRequest, res: Response, next: NextFunction) {
 		try {
 			const userId = req.userId;
 			const page = parseInt(req.query.page as string) || 1;
@@ -63,12 +68,15 @@ export default class CreditLendingController {
 				return;
 			}
 			res.status(200).json(loanRequests);
-		} catch (error: any) {
-			res.status(500).json({ error: error.message });
+		} catch (error) {
+			if (error instanceof ApiError) {
+				return next(new ApiError(error.message, error.statusCode));
+			}
+			return next(new ApiError("Internal Server Error", 500));
 		}
 	}
 
-	static async createLenderLoanOffer(req: AuthRequest, res: Response) {
+	static async createLenderLoanOffer(req: AuthRequest, res: Response, next: NextFunction) {
 		try {
 			const userId = req.userId;
 			const { loanRequestId, terms, interestRate } = req.body;
@@ -88,12 +96,15 @@ export default class CreditLendingController {
 				return;
 			}
 			res.status(201).json(approvedLoanRequest);
-		} catch (error: any) {
-			res.status(500).json({ error: error.message });
+		} catch (error) {
+			if (error instanceof ApiError) {
+				return next(new ApiError(error.message, error.statusCode));
+			}
+			return next(new ApiError("Internal Server Error", 500));
 		}
 	}
 
-	static async getLoanOfferById(req: AuthRequest, res: Response) {
+	static async getLoanOfferById(req: AuthRequest, res: Response, next: NextFunction) {
 		try {
 			const { loanOfferId } = req.params;
 			const data = await LoanRepository.getLoanOfferById(
@@ -104,12 +115,15 @@ export default class CreditLendingController {
 				return;
 			}
 			res.status(200).json(data);
-		} catch (error: any) {
-			res.status(500).json({ error: error.message });
+		} catch (error) {
+			if (error instanceof ApiError) {
+				return next(new ApiError(error.message, error.statusCode));
+			}
+			return next(new ApiError("Internal Server Error", 500));
 		}
 	}
 
-    static  async getLoanOfferByRequestId(req: AuthRequest, res: Response) {
+    static  async getLoanOfferByRequestId(req: AuthRequest, res: Response, next: NextFunction) {
         try {
             const { loanRequestId } = req.params;
             const data = await LoanRepository.getLoanOfferByLoanRequestId(loanRequestId);
@@ -118,13 +132,15 @@ export default class CreditLendingController {
                 return;
             }
             res.status(200).json(data);
-        }
-        catch (error: any) {
-            res.status(500).json({ error: error.message });
-        }
+        }catch (error) {
+			if (error instanceof ApiError) {
+				return next(new ApiError(error.message, error.statusCode));
+			}
+			return next(new ApiError("Internal Server Error", 500));
+		}
     }
 
-	static async createLoan(req: AuthRequest, res: Response) {
+	static async createLoan(req: AuthRequest, res: Response, next: NextFunction) {
 		try {
 			const { loanRequestId, lenderId } = req.body;
 			if (!lenderId) {
@@ -155,12 +171,15 @@ export default class CreditLendingController {
 				loanRequest!
 			);
 			res.status(200).json({ message: "Loan created successfully", data });
-		} catch (error: any) {
-			res.status(500).json({ error: error.message });
+		} catch (error) {
+			if (error instanceof ApiError) {
+				return next(new ApiError(error.message, error.statusCode));
+			}
+			return next(new ApiError("Internal Server Error", 500));
 		}
 	}
 
-	static async getLoanById(req: AuthRequest, res: Response) {
+	static async getLoanById(req: AuthRequest, res: Response, next: NextFunction) {
 		try {
 			const { loanId } = req.params;
 			const data = await LoanRepository.getLoanById(loanId);
@@ -169,12 +188,15 @@ export default class CreditLendingController {
                 return;
 			}
 			res.status(200).json(data);
-		} catch (error: any) {
-			res.status(500).json({ error: error.message });
+		} catch (error) {
+			if (error instanceof ApiError) {
+				return next(new ApiError(error.message, error.statusCode));
+			}
+			return next(new ApiError("Internal Server Error", 500));
 		}
 	}
 
-	static async getLenderLoans(req: AuthRequest, res: Response) {
+	static async getLenderLoans(req: AuthRequest, res: Response, next: NextFunction) {
 		try {
 			const userId = req.userId;
 			const page = parseInt(req.query.page as string) || 1;
@@ -185,18 +207,24 @@ export default class CreditLendingController {
                 return;
 			}
 			res.status(200).json(data);
-		} catch (error: any) {
-			res.status(500).json({ error: error.message });
+		} catch (error) {
+			if (error instanceof ApiError) {
+				return next(new ApiError(error.message, error.statusCode));
+			}
+			return next(new ApiError("Internal Server Error", 500));
 		}
 	}
 
-	static async getCreditScoreByUserId(req: AuthRequest, res: Response) {
+	static async getCreditScoreByUserId(req: AuthRequest, res: Response, next: NextFunction) {
 		try {
 			const { userId } = req.params;
 			const creditScore = await CreditScoreService.getCreditScore(userId);
 			res.status(200).json(creditScore);
-		} catch (error: any) {
-			res.status(500).json({ error: error.message });
+		} catch (error) {
+			if (error instanceof ApiError) {
+				return next(new ApiError(error.message, error.statusCode));
+			}
+			return next(new ApiError("Internal Server Error", 500));
 		}
 	}
 }

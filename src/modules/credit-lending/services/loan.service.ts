@@ -1,21 +1,21 @@
-import { Types } from "mongoose";
 import LoanRepository from "../data-access/loan.repository";
 import { ILoanRequest } from "../../../common/interfaces/loanRequest";
+import ApiError from "../../../utils/ApiError";
 
 export default class LoanService {
 	
     static async createBorrowerLoan(lenderId: string, loanRequest: Partial<ILoanRequest>) {
         if (!lenderId) {
-            throw new Error("user is not authorized to create a loan");
+            throw new ApiError("user is not authorized to create a loan", 400);
         }
         if (!loanRequest) {
-            throw new Error("Loan request is required");
+            throw new ApiError("Loan request is required", 400);
         }
         if (loanRequest.status !== "approved") {
-            throw new Error("Loan request is not approved");
+            throw new ApiError("Loan request is not approved", 400);
         }
         if (loanRequest.isDeleted) {
-            throw new Error("Loan request has been deleted");
+            throw new ApiError("Loan request has been deleted", 400);
         }
         const loan = await LoanRepository.createLoan({
 			borrowerId: loanRequest.userId!.toString(),
@@ -54,7 +54,7 @@ export default class LoanService {
 		});
 
         if (!loan) {
-            throw new Error("Failed to create loan");
+            throw new ApiError("Failed to create loan", 400);
         }
         return loan;
     }
