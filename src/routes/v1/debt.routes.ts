@@ -3,4 +3,11 @@ import { DebtController } from '../../modules/debt-transfer-protocol/controllers
 
 const router = Router();
 
+router.get('/',  DebtController.getAllDebtTransfers);
+
 router.get('/:userId', DebtController.getUserDebtTransfers);
+
+router.post('/', DebtController.postDebtTransferAd);
+
+
+export default router;
