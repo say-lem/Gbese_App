@@ -37,12 +37,10 @@ export default class CreditLendingController {
 				loanRequestId
 			);
 			if (!loanRequest) {
-				res.status(404).json({ message: "Loan request not found" });
-				return;
+				return next(new ApiError("Loan request not found", 404));
 			}
 			if (loanRequest.isDeleted) {
-				res.status(400).json({ message: "Loan request has been deleted" });
-				return;
+				return next(new ApiError("Loan request has been deleted", 400));
 			}
 			res.status(200).json(loanRequest);
 		} catch (error) {
@@ -64,8 +62,7 @@ export default class CreditLendingController {
 				limit
 			);
 			if (!loanRequests) {
-				res.status(404).json({ message: "No loan requests found" });
-				return;
+				return next(new ApiError("No loan requests found", 404));
 			}
 			res.status(200).json(loanRequests);
 		} catch (error) {
@@ -87,13 +84,11 @@ export default class CreditLendingController {
 				interestRate
 			);
 			if (!loanOffer) {
-				res.status(400).json({ message: "Failed to create loan offer" });
-				return;
+				next(new ApiError("Failed to create loan offer", 400));
 			}
 			const approvedLoanRequest = await LenderService.approveLoanRequest(userId!, loanOffer.loanRequestId);
 			if (!approvedLoanRequest) {
-				res.status(400).json({ message: "Failed to approve loan request" });
-				return;
+				return next( new ApiError("Failed to approve loan request", 400));
 			}
 			res.status(201).json(approvedLoanRequest);
 		} catch (error) {
@@ -111,8 +106,7 @@ export default class CreditLendingController {
 				loanOfferId
 			);
 			if (!data) {
-				res.status(404).json({ message: "No loan offers found" });
-				return;
+				return next(new ApiError("No loan offers found", 404));
 			}
 			res.status(200).json(data);
 		} catch (error) {
@@ -128,7 +122,7 @@ export default class CreditLendingController {
             const { loanRequestId } = req.params;
             const data = await LoanRepository.getLoanOfferByLoanRequestId(loanRequestId);
             if (!data) {
-                res.status(404).json({ message: "Loan offer not found" });
+                next(new ApiError("Loan offer not found", 404));
                 return;
             }
             res.status(200).json(data);
@@ -148,23 +142,19 @@ export default class CreditLendingController {
 				return;
 			}
 			if (!loanRequestId) {
-				res.status(400).json({ message: "Loan request ID is required" });
-				return;
+				return next(new ApiError("Loan request ID is required", 400));
 			}
 			const loanRequest = await LoanRepository.getLoanRequestById(
 				loanRequestId
 			);
 			if (!loanRequest) {
-				res.status(404).json({ message: "Loan request not found" });
-				return;
+				return next(new ApiError("Loan request not found", 404));
 			}
 			if (loanRequest.status !== "approved") {
-				res.status(400).json({ message: "Loan request is not approved" });
-				return;
+				return next(new ApiError("Loan request is not approved", 400));
 			}
 			if (loanRequest.isDeleted) {
-				res.status(400).json({ message: "Loan request has been deleted" });
-                return;
+				return next(new ApiError("Loan request has been deleted", 400));
 			}
 			const data = await LoanService.createBorrowerLoan(
 				lenderId,
@@ -184,8 +174,7 @@ export default class CreditLendingController {
 			const { loanId } = req.params;
 			const data = await LoanRepository.getLoanById(loanId);
 			if (!data) {
-                res.status(404).json({ message: "Loan not found" });
-                return;
+                return next(new ApiError("Loan not found", 404));
 			}
 			res.status(200).json(data);
 		} catch (error) {
@@ -203,8 +192,7 @@ export default class CreditLendingController {
 			const limit = parseInt(req.query.limit as string) || 10;
 			const data = await LoanRepository.getUserLoans(userId!, page, limit);
 			if (!data) {
-				res.status(404).json({ message: "No loans found" });
-                return;
+				return next(new ApiError("No loans found", 404));
 			}
 			res.status(200).json(data);
 		} catch (error) {
