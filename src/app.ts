@@ -2,7 +2,8 @@ import express from 'express';
 import cors from 'cors';
 import userRoutes from './routes/v1/user.routes';
 import transactionRoutes from './routes/v1/transaction.routes';
-import { loanRequestRouter, loanOfferRouter, loanRouter, creditScoreRouter } from './routes/v1/credit-lending.routes';
+import { loanRequestRouter, loanOfferRouter, loanRouter} from './routes/v1/credit-lending.routes';
+import  creditScoreRouter  from './routes/v1/reputation-credit-score.routes';
 import { errorHandler, notFound } from './middleware/error.middleware';
 import cookieParser from 'cookie-parser';
 

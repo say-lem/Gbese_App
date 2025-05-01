@@ -136,10 +136,16 @@ export default class CreditLendingController {
 
 	static async createLoan(req: AuthRequest, res: Response, next: NextFunction) {
 		try {
+			const userId = req.userId;
+			
 			const { loanRequestId, lenderId } = req.body;
+
+			if (lenderId !== userId) {
+				return next(new ApiError("User is not authorized to create a loan", 400));
+			}
+
 			if (!lenderId) {
-				res.status(400).json({ message: "Lender ID is required" });
-				return;
+				return next(new ApiError("Lender ID is required", 400));
 			}
 			if (!loanRequestId) {
 				return next(new ApiError("Loan request ID is required", 400));
@@ -160,15 +166,22 @@ export default class CreditLendingController {
 				lenderId,
 				loanRequest!
 			);
-			const updateFiatBalances = await LoanService.updateFiatBalances(
+			const disbursedLoan = await LoanService.disburseLoan(
 				lenderId,
 				loanRequest.userId!.toString(),
 				loanRequest.amount!
 			);
 
-			// const updateTransactionHistory = await LoanService.updateTransactionHistory();
-	
+			const lenderTx = disbursedLoan[0];
+			const borrowerTx = disbursedLoan[1];
+
+			// TODO: Add logic to notify both lender and borrower about the loan disbursement
+			// e.g using a notification service
+			// await NotificationService.notifyUser(lenderId, "Loan disbursed", lenderTx);
+			// await NotificationService.notifyUser(loanRequest.userId!.toString(), "Loan received", borrowerTx);
+
 			res.status(200).json({ message: "Loan created successfully", data });
+
 		} catch (error) {
 			if (error instanceof ApiError) {
 				return next(new ApiError(error.message, error.statusCode));
@@ -203,19 +216,6 @@ export default class CreditLendingController {
 				return next(new ApiError("No loans found", 404));
 			}
 			res.status(200).json(data);
-		} catch (error) {
-			if (error instanceof ApiError) {
-				return next(new ApiError(error.message, error.statusCode));
-			}
-			return next(new ApiError("Internal Server Error", 500));
-		}
-	}
-
-	static async getCreditScoreByUserId(req: AuthRequest, res: Response, next: NextFunction) {
-		try {
-			const { userId } = req.params;
-			const creditScore = await CreditScoreService.getCreditScore(userId);
-			res.status(200).json(creditScore);
 		} catch (error) {
 			if (error instanceof ApiError) {
 				return next(new ApiError(error.message, error.statusCode));

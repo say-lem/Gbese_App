@@ -2,6 +2,7 @@ import LoanRepository from "../data-access/loan.repository";
 import { ILoanRequest } from "../../../common/interfaces/loanRequest";
 import ApiError from "../../../utils/ApiError";
 import { WalletService } from "../../wallet-management/services/wallet.service";
+import { TransactionService } from "../../transaction-managemment/services/transaction.service";
 
 export default class LoanService {
 	
@@ -60,7 +61,7 @@ export default class LoanService {
         return loan;
     }
 
-	static async updateFiatBalances(lenderId: string, borrowerId: string, amount: number) {
+	static async disburseLoan(lenderId: string, borrowerId: string, amount: number) {
 		if (!lenderId || !borrowerId) {
 			throw new ApiError("user is not authorized to update fiat balance", 400);
 		}
@@ -68,26 +69,15 @@ export default class LoanService {
 			throw new ApiError("Amount is required", 400);
 		}
 
-		const updatedBorrrowerBalance = await WalletService.updateFiatBalance(borrowerId, -amount);
-		
-		if (!updatedBorrrowerBalance) {
-			throw new ApiError("Failed to update fiat balance", 400);
-		}
+		const [lenderTx, borrowerTx] = await TransactionService.transfer(
+			lenderId,
+			borrowerId,
+			amount,
+			"loan"
+		);
 
-		const updatedLenderBalance = await WalletService.updateFiatBalance(lenderId, amount);
-		if (!updatedLenderBalance) {
-			throw new ApiError("Failed to update fiat balance", 400);
-		}
-		return { updatedBorrrowerBalance, updatedLenderBalance };
+		return [lenderTx, borrowerTx];
 	}
-
-	static async updateTransactionHistory(
-		borrowerId: string,
-		lenderId: string,
-		amount: number,
-		loanId: string,
-		transactionType: string
-	) {}
 
     async payDueLoan(){
         // TODO: Implement this method

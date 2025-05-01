@@ -6,7 +6,7 @@ import { authenticate } from "../../middleware/auth.middleware";
 const loanRequestRouter = Router();
 const loanOfferRouter = Router();
 const loanRouter = Router();
-const creditScoreRouter = Router(); 
+
 
 // Loan Request routes
 loanRequestRouter.post("/", authenticate, CreditLendingController.createNewLoanRequest);
@@ -23,9 +23,8 @@ loanRouter.post("/", authenticate, CreditLendingController.createLoan);
 loanRouter.get("/:loanId", authenticate, CreditLendingController.getLoanById);
 loanRouter.get("/lender/:lenderId", authenticate, CreditLendingController.getLenderLoans);
 
-// Credit Score routes
-creditScoreRouter.get("/:userId", authenticate, CreditLendingController.getCreditScoreByUserId);
 
 
 
-export { loanRequestRouter, loanOfferRouter, loanRouter, creditScoreRouter };
+
+export { loanRequestRouter, loanOfferRouter, loanRouter};
