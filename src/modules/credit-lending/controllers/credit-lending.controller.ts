@@ -166,7 +166,7 @@ export default class CreditLendingController {
 				lenderId,
 				loanRequest!
 			);
-			const {lenderTx, borrowerTx} = await LoanService.disburseLoan(
+			const transactionData = await LoanService.disburseLoan(
 				lenderId,
 				loanRequest.userId!.toString(),
 				loanRequest.amount!

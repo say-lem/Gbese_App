@@ -1,6 +1,6 @@
 import ApiError from "../../../utils/ApiError";
 import { WalletModel } from "../models/wallet.model";
-import { Types } from "mongoose";
+import { ClientSession, Types } from "mongoose";
 
 export class WalletService {
 	static async getWalletByUserId(userId: string) {
@@ -21,8 +21,8 @@ export class WalletService {
 		return newWallet.save();
 	}
 
-	static async updateTokenBalance(userId: string, amount: number) {
-		const checkWallet = await WalletModel.findOne({ userId });
+	static async updateTokenBalance(userId: string, amount: number, session: ClientSession) {
+		const checkWallet = await WalletModel.findOne({ userId }).session(session ?? null);
 		if (!checkWallet) throw new ApiError("Wallet not found", 404);
 
     // Check if the amount is valid for deposit or withdrawal
@@ -32,15 +32,15 @@ export class WalletService {
 		const updatedWallet = await WalletModel.findOneAndUpdate(
       { userId, tokenBalance: { $gte: amount <= 0 ? -amount : 0 } },
       { $inc: { tokenBalance: amount } },
-      { new: true }
+      { new: true, session }
     );
     if (!updatedWallet) throw new ApiError("insufficient balance", 400);
     return updatedWallet;
 	}
 
-	static async updateFiatBalance(userId: string, amount: number) {
+	static async updateFiatBalance(userId: string, amount: number, session?: ClientSession) {
 		// Check if the user has a wallet
-		const checkWallet = await WalletModel.findOne({ userId });
+		const checkWallet = await WalletModel.findOne({ userId }).session(session ?? null);
 		if (!checkWallet) throw new ApiError("Wallet not found", 404);
 
 		// Check if the amount is valid for deposit or withdrawal
@@ -50,10 +50,9 @@ export class WalletService {
 		const updatedWallet = await WalletModel.findOneAndUpdate(
 			{ userId, fiatBalance: { $gte: amount <= 0 ? -amount : 0 } },
 			{ $inc: { fiatBalance: amount } },
-			{ new: true }
+			{ new: true, session }
 		);
 		if (!updatedWallet) throw new ApiError("insufficient balance", 400);
-
 		return updatedWallet;
 	}
 }

@@ -43,47 +43,56 @@ export class TransactionService {
 		amount: number,
 		transactionType: string
 	) {
-		try {
-			// Perform wallet updates
-			await WalletService.updateFiatBalance(userId, -amount);
-			await WalletService.updateFiatBalance(recipientId, amount);
-			const [sender, recipient] = await Promise.all([
-				UserModel.findById(userId),
-				UserModel.findById(recipientId),
-			]);
+		const session = await TransactionModel.db.startSession();
 
-			// Create transactions for both parties
-			const [senderTransaction, recipientTransaction] = await Promise.all([
-				new TransactionModel({
+		try {
+			const transacton = await session.withTransaction(async () => {
+				// Get both users first to verify they exist
+				const sender = await UserModel.findById(userId).session(session);
+				const recipient = await UserModel.findById(recipientId).session(
+					session
+				);
+
+				if (!sender || !recipient) {
+					throw new ApiError("Sender or recipient not found", 404);
+				}
+
+				// Update both wallets within the transaction
+				await WalletService.updateFiatBalance(userId, -amount, session);
+				await WalletService.updateFiatBalance(recipientId, amount, session);
+
+				// Create transactions for both parties
+				const senderTransaction = new TransactionModel({
 					userId,
 					transactionType,
 					amount,
 					fiatChange: -amount,
 					status: "completed",
-					details: { recipient: recipient?.username },
+					details: { recipient: recipient.username },
 					timestamp: new Date(),
-				}).save(),
-				new TransactionModel({
+				}).save({ session });
+				const recipientTransaction = await new TransactionModel({
 					userId: recipientId,
 					transactionType,
 					amount,
 					fiatChange: amount,
 					status: "completed",
-					details: { sender: sender?.username },
+					details: { sender: sender.username },
 					timestamp: new Date(),
-				}).save(),
-			]);
-
-			return [senderTransaction, recipientTransaction];
+				}).save({ session });
+				session.commitTransaction();
+				return { senderTransaction, recipientTransaction };
+			});
+			
+			return transacton;
 		} catch (error: unknown) {
-	  
-			// Rollback if anything fails
-			await WalletService.updateFiatBalance(userId, amount);
-			await WalletService.updateFiatBalance(recipientId, -amount);
+			session.abortTransaction();
 			if (error instanceof Error) {
 				throw new ApiError("Transfer failed: " + error.message, 500);
 			}
 			throw new ApiError("Transfer failed: Unknown error", 500);
+		} finally {
+			await session.endSession();
 		}
 	}
 

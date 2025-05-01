@@ -1,4 +1,5 @@
 import { CreditScoreModel } from "../models/index";
+import { ClientSession } from "mongoose";
 
 export default class CreditScoreRepository {
     
@@ -6,19 +7,19 @@ export default class CreditScoreRepository {
         return CreditScoreModel.findOne({ userId }).exec();
     }
 
-    static async updateCreditScore(userId: string, score: number) {
+    static async updateCreditScore(userId: string, score: number, session: ClientSession) {
         return CreditScoreModel.findOneAndUpdate(
             { userId },
             { score, lastUpdated: new Date() },
-            { new: true }
+            { new: true, session }
         ).exec();
     }
 
-    static async addCreditScoreHistory(userId: string, score: number) {
+    static async addCreditScoreHistory(userId: string, score: number, session: ClientSession) {
         return CreditScoreModel.findOneAndUpdate(
             { userId },
             { $push: { history: { date: new Date(), score } } },
-            { new: true }
+            { new: true, session}
         ).exec();
     }
 }
