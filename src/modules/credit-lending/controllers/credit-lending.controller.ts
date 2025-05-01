@@ -166,14 +166,11 @@ export default class CreditLendingController {
 				lenderId,
 				loanRequest!
 			);
-			const disbursedLoan = await LoanService.disburseLoan(
+			const {lenderTx, borrowerTx} = await LoanService.disburseLoan(
 				lenderId,
 				loanRequest.userId!.toString(),
 				loanRequest.amount!
 			);
-
-			const lenderTx = disbursedLoan[0];
-			const borrowerTx = disbursedLoan[1];
 
 			// TODO: Add logic to notify both lender and borrower about the loan disbursement
 			// e.g using a notification service

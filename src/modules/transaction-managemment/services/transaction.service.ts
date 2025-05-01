@@ -47,11 +47,10 @@ export class TransactionService {
 			// Perform wallet updates
 			await WalletService.updateFiatBalance(userId, -amount);
 			await WalletService.updateFiatBalance(recipientId, amount);
-
-      const [sender, recipient] = await Promise.all([
-        UserModel.findById(userId),
-        UserModel.findById(recipientId),
-      ]);
+			const [sender, recipient] = await Promise.all([
+				UserModel.findById(userId),
+				UserModel.findById(recipientId),
+			]);
 
 			// Create transactions for both parties
 			const [senderTransaction, recipientTransaction] = await Promise.all([
