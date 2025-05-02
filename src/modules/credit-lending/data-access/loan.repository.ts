@@ -3,6 +3,7 @@ import { ILoan } from "./../../../common/interfaces/loan";
 import { ILoanOffer } from "../../../common/interfaces/loanOffer";
 import { ILoanRequest } from "../../../common/interfaces/loanRequest";
 import { paginate } from "../../../utils/Paginate";
+import { ClientSession } from "mongoose";
 
 export default class LoanRepository {
 	// Loan Request Methods
@@ -17,8 +18,8 @@ export default class LoanRepository {
 		});
 	}
 
-	static async getLoanRequestById(loanRequestId: string) {
-		return LoanRequestModel.findById(loanRequestId).exec();
+	static async getLoanRequestById(loanRequestId: string, session?: ClientSession) {
+		return LoanRequestModel.findById(loanRequestId).session(session?? null).exec();
 	}
 
 	static async getUserLoanRequests(
@@ -68,7 +69,7 @@ export default class LoanRepository {
 	}
 
 	// Loan Methods
-	static async createLoan(data: Partial<ILoan>) {
+	static async createLoan(data: Partial<ILoan>, session?: ClientSession) {
 		return await LoanModel.create({
 			borrowerId: data.borrowerId,
 			lenderId: data.lenderId,
@@ -86,7 +87,7 @@ export default class LoanRepository {
 			missedPaymentCount: 0, // Initialize to 0
 			tokenId: data.tokenId,
 			repaymentMethod: data.repaymentMethod,
-		});
+		},{ session });
 	}
 
 	static async getLoanById(loanId: string) {

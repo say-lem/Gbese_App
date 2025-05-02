@@ -5,6 +5,7 @@ import LoanService from "../services/loan.service";
 import LenderService from "../services/lender.service";
 import CreditScoreService from "../../reputation-credit-scoring/services/credit-score.service";
 import ApiError from "../../../utils/ApiError";
+import mongoose from "mongoose";
 
 export default class CreditLendingController {
 
@@ -135,55 +136,73 @@ export default class CreditLendingController {
     }
 
 	static async createLoan(req: AuthRequest, res: Response, next: NextFunction) {
+
+		const session = await mongoose.startSession();
+
 		try {
 			const userId = req.userId;
 			
 			const { loanRequestId, lenderId } = req.body;
 
-			if (lenderId !== userId) {
-				return next(new ApiError("User is not authorized to create a loan", 400));
-			}
+			
 
-			if (!lenderId) {
-				return next(new ApiError("Lender ID is required", 400));
-			}
-			if (!loanRequestId) {
-				return next(new ApiError("Loan request ID is required", 400));
-			}
-			const loanRequest = await LoanRepository.getLoanRequestById(
-				loanRequestId
-			);
-			if (!loanRequest) {
-				return next(new ApiError("Loan request not found", 404));
-			}
-			if (loanRequest.status !== "approved") {
-				return next(new ApiError("Loan request is not approved", 400));
-			}
-			if (loanRequest.isDeleted) {
-				return next(new ApiError("Loan request has been deleted", 400));
-			}
-			const data = await LoanService.createBorrowerLoan(
-				lenderId,
-				loanRequest!
-			);
-			const transactionData = await LoanService.disburseLoan(
-				lenderId,
-				loanRequest.userId!.toString(),
-				loanRequest.amount!
-			);
+			const loanTransaction = await session.withTransaction ( async () => {
+				if (lenderId !== userId) {
+					return next(new ApiError("User is not authorized to create a loan", 400));
+				}
+	
+				if (!lenderId) {
+					return next(new ApiError("Lender ID is required", 400));
+				}
+				if (!loanRequestId) {
+					return next(new ApiError("Loan request ID is required", 400));
+				}
+				const loanRequest = await LoanRepository.getLoanRequestById(
+					loanRequestId,
+					session
+				);
+				if (!loanRequest) {
+					return next(new ApiError("Loan request not found", 404));
+				}
+				if (loanRequest.status !== "approved") {
+					return next(new ApiError("Loan request is not approved", 400));
+				}
+				if (loanRequest.isDeleted) {
+					return next(new ApiError("Loan request has been deleted", 400));
+				}
+				const data = await LoanService.createBorrowerLoan(
+					lenderId,
+					loanRequest!,
+					session
+				);
+				const transactionData = await LoanService.disburseLoan(
+					lenderId,
+					loanRequest.userId!.toString(),
+					loanRequest.amount!
+				);
+	
+				// TODO: Add logic to notify both lender and borrower about the loan disbursement
+				// e.g using a notification service
+				// await NotificationService.notifyUser(lenderId, "Loan disbursed", lenderTx);
+				// await NotificationService.notifyUser(loanRequest.userId!.toString(), "Loan received", borrowerTx);
 
-			// TODO: Add logic to notify both lender and borrower about the loan disbursement
-			// e.g using a notification service
-			// await NotificationService.notifyUser(lenderId, "Loan disbursed", lenderTx);
-			// await NotificationService.notifyUser(loanRequest.userId!.toString(), "Loan received", borrowerTx);
+				await session.commitTransaction();
+				return data;
+			})
 
-			res.status(200).json({ message: "Loan created successfully", data });
+			if (loanTransaction){
+				res.status(200).json({ message: "Loan created successfully", data: loanTransaction });
+			}
+				
 
 		} catch (error) {
+			await session.abortTransaction();
 			if (error instanceof ApiError) {
 				return next(new ApiError(error.message, error.statusCode));
 			}
 			return next(new ApiError("Internal Server Error", 500));
+		} finally {
+			await session.endSession()
 		}
 	}
 

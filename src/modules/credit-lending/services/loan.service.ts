@@ -3,11 +3,13 @@ import { ILoanRequest } from "../../../common/interfaces/loanRequest";
 import ApiError from "../../../utils/ApiError";
 import { WalletService } from "../../wallet-management/services/wallet.service";
 import { TransactionService } from "../../transaction-managemment/services/transaction.service";
+import { ClientSession } from "mongoose";
 
 export default class LoanService {
 	static async createBorrowerLoan(
 		lenderId: string,
-		loanRequest: Partial<ILoanRequest>
+		loanRequest: Partial<ILoanRequest>,
+		session: ClientSession
 	) {
 		if (!lenderId) {
 			throw new ApiError("user is not authorized to create a loan", 400);
@@ -55,7 +57,7 @@ export default class LoanService {
 			isOverdue: false,
 			missedPaymentCount: 0,
 			tokenId: "", // Assuming you will handle tokenization separately
-		});
+		}, session );
 
 		if (!loan) {
 			throw new ApiError("Failed to create loan", 400);

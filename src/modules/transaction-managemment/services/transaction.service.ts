@@ -80,13 +80,13 @@ export class TransactionService {
 					details: { sender: sender.username },
 					timestamp: new Date(),
 				}).save({ session });
-				session.commitTransaction();
+				await session.commitTransaction();
 				return { senderTransaction, recipientTransaction };
 			});
 			
 			return transacton;
 		} catch (error: unknown) {
-			session.abortTransaction();
+			await session.abortTransaction();
 			if (error instanceof Error) {
 				throw new ApiError("Transfer failed: " + error.message, 500);
 			}
