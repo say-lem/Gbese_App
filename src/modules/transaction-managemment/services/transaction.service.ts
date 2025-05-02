@@ -86,11 +86,13 @@ export class TransactionService {
 			
 			return transacton;
 		} catch (error: unknown) {
-			await session.abortTransaction();
-			if (error instanceof Error) {
-				throw new ApiError("Transfer failed: " + error.message, 500);
+			if (session.inTransaction()){
+				await session.abortTransaction();
 			}
-			throw new ApiError("Transfer failed: Unknown error", 500);
+			if (error instanceof ApiError) {
+				throw new ApiError("Transaction failed: " + error.message, error.statusCode);
+			}
+			throw new ApiError("Trasaction failed: Unknown error", 500);
 		} finally {
 			await session.endSession();
 		}

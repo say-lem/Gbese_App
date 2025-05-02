@@ -88,7 +88,7 @@ export default class LoanService {
 		return updatedTx;
 	}
 
-	async payDueLoan(
+	static async payDueLoan(
 		borrowerId: string,
 		lenderId: string,
 		amount: number,

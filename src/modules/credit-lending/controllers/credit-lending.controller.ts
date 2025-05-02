@@ -196,7 +196,12 @@ export default class CreditLendingController {
 				
 
 		} catch (error) {
-			await session.abortTransaction();
+			if (session.inTransaction()){
+				await session.abortTransaction();
+			}
+
+			console.log(error);
+			
 			if (error instanceof ApiError) {
 				return next(new ApiError(error.message, error.statusCode));
 			}
