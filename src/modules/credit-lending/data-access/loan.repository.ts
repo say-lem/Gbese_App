@@ -70,7 +70,8 @@ export default class LoanRepository {
 
 	// Loan Methods
 	static async createLoan(data: Partial<ILoan>, session?: ClientSession) {
-		return await LoanModel.create({
+
+		const loan = new LoanModel ({
 			borrowerId: data.borrowerId,
 			lenderId: data.lenderId,
 			principalAmount: data.principalAmount,
@@ -87,7 +88,10 @@ export default class LoanRepository {
 			missedPaymentCount: 0, // Initialize to 0
 			tokenId: data.tokenId,
 			repaymentMethod: data.repaymentMethod,
-		},{ session });
+		});
+
+
+		return await loan.save({ session });
 	}
 
 	static async getLoanById(loanId: string) {
