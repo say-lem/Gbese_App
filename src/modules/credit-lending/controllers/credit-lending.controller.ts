@@ -6,14 +6,24 @@ import LenderService from "../services/lender.service";
 import CreditScoreService from "../../reputation-credit-scoring/services/credit-score.service";
 import ApiError from "../../../utils/ApiError";
 import mongoose from "mongoose";
+import { LOAN_INTEREST } from "../../../config/constants";
 
 export default class CreditLendingController {
 
 
 	static async createNewLoanRequest(req: AuthRequest, res: Response, next: NextFunction) {
+
 		try {
 			const userId = req.userId;
 			const { amount, term, interestRate } = req.body;
+			const eligableLoan = await CreditScoreService.checkLoanLimit(userId!);
+			if (eligableLoan < amount ) {
+				throw new ApiError(`Your Eligible loan limit is ${eligableLoan.toLocaleString()}`, 400);
+			}
+
+			if (interestRate !== LOAN_INTEREST){
+				throw new ApiError("Interest Rate is not Valid", 400);
+			}
 			const loanRequest = await LoanRepository.createLoanRequest(userId!, {
 				amount,
 				term,
@@ -78,6 +88,10 @@ export default class CreditLendingController {
 		try {
 			const userId = req.userId;
 			const { loanRequestId, terms, interestRate } = req.body;
+
+			if (interestRate !== LOAN_INTEREST) {
+				return next(new ApiError("Invalid Interest Rate", 400));
+			}
 			const loanOffer = await LenderService.createLenderLoanOffer(
 				userId!,
 				loanRequestId,
@@ -85,7 +99,7 @@ export default class CreditLendingController {
 				interestRate
 			);
 			if (!loanOffer) {
-				next(new ApiError("Failed to create loan offer", 400));
+				return next(new ApiError("Failed to create loan offer", 400));
 			}
 			const approvedLoanRequest = await LenderService.approveLoanRequest(userId!, loanOffer.loanRequestId);
 			if (!approvedLoanRequest) {

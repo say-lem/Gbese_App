@@ -1,25 +1,33 @@
+import { ICreditScore } from "../../../common/interfaces/creditScore";
 import { CreditScoreModel } from "../models/index";
 import { ClientSession } from "mongoose";
 
 export default class CreditScoreRepository {
-    
-    static async getCreditScore(userId: string) {
-        return CreditScoreModel.findOne({ userId }).exec();
-    }
+	static async getCreditScore(userId: string, session?: ClientSession) {
+		return CreditScoreModel.findOne({ userId })
+			.session(session ?? null)
+			.exec();
+	}
 
-    static async updateCreditScore(userId: string, score: number, session: ClientSession) {
-        return CreditScoreModel.findOneAndUpdate(
-            { userId },
-            { score, lastUpdated: new Date() },
-            { new: true, session }
-        ).exec();
-    }
+	static async createCreditScore(
+		data: Partial<ICreditScore>,
+		session?: ClientSession
+	) {
+		const creditScore = new CreditScoreModel({ data });
 
-    static async addCreditScoreHistory(userId: string, score: number, session: ClientSession) {
-        return CreditScoreModel.findOneAndUpdate(
-            { userId },
-            { $push: { history: { date: new Date(), score } } },
-            { new: true, session}
-        ).exec();
-    }
+		return await creditScore.save({ session });
+	}
+
+	static async updateCreditScoreHistory(
+		userId: string,
+		scoreChange: number,
+		reason: string,
+		session?: ClientSession
+	) {
+		return CreditScoreModel.findOneAndUpdate(
+			{ userId },
+			{ $push: { history: { timestamp: Date.now(), scoreChange, reason } } },
+			{ new: true, session }
+		).exec();
+	}
 }

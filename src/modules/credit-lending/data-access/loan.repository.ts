@@ -94,8 +94,8 @@ export default class LoanRepository {
 		return await loan.save({ session });
 	}
 
-	static async getLoanById(loanId: string) {
-		return LoanModel.findById(loanId).exec();
+	static async getLoanById(loanId: string, session?: ClientSession) {
+		return LoanModel.findById(loanId).session(session ?? null).exec();
 	}
 
 	static async getUserLoans(userId: string, page: number, limit: number) {
@@ -105,11 +105,11 @@ export default class LoanRepository {
 		});
 	}
 
-	static async UpdateLoan(loanId: string, data: Partial<ILoan>) {
+	static async UpdateLoan(loanId: string, data: Partial<ILoan>, session?: ClientSession) {
 		return await LoanModel.findByIdAndUpdate(
 			loanId,
 			{ $set: data },
-			{ new: true }
+			{ new: true, session }
 		);
 	}
 }

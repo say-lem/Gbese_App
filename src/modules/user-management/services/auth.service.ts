@@ -9,6 +9,8 @@ import {
   generateRefreshToken
 } from '../../../utils/auth.utils';
 import { generateWalletForUser } from './address.service';
+import CreditScoreRepository from '../../reputation-credit-scoring/data-access/credit-score.repository';
+import { Types } from 'mongoose';
 
 export class AuthService {
   // Register a new user
@@ -42,6 +44,13 @@ export class AuthService {
     const savedUser = await newUser.save() as IUserDocument;
 
     await WalletService.createWallet(savedUser._id); //create a wallet for the user
+
+    await CreditScoreRepository.createCreditScore({
+      userId: savedUser.userId as unknown as Types.ObjectId,
+      score: savedUser.baseCreditScore,
+      history: [],
+
+    })
 
     const accessToken = generateAccessToken(savedUser._id.toString());
     const refreshToken = generateRefreshToken(savedUser._id.toString());

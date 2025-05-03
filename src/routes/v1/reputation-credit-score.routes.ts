@@ -7,5 +7,6 @@ const router = Router();
 
 // Credit Score routes
 router.get("/:userId", authenticate, CreditScoreController.getCreditScoreByUserId);
+router.get("/loan/limit", authenticate, CreditScoreController.getUserLoanLimit);
 
 export default router;

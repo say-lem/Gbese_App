@@ -1,32 +1,25 @@
 import { ClientSession } from "mongoose";
 import ApiError from "../../../utils/ApiError";
 import CreditScoreRepository from "../data-access/credit-score.repository";
+import { INITIAL_LOAN_LIMIT, LOAN_INTEREST, NEW_USER_CREDIT_SCORE } from "../../../config/constants";
 
 export default class CreditScoreService {
     
-    static async getCreditScore(userId: string) {
+    static async checkLoanLimit(userId: string ) {
         const creditScore = await CreditScoreRepository.getCreditScore(userId);
         if (!creditScore) {
-            throw new ApiError('Credit score not found', 404);
+            throw new ApiError('Unable to get Loan Limit', 404);
         }
-        return creditScore;
+        const eligableLoan = (creditScore.score / NEW_USER_CREDIT_SCORE) * INITIAL_LOAN_LIMIT;
+        
+        return eligableLoan;
     }
 
-    static async updateCreditScore(userId: string, score: number, session: ClientSession) {
-        const updatedCreditScore = await CreditScoreRepository.updateCreditScore(userId, score, session);
-        if (!updatedCreditScore) {
-            throw new ApiError('Failed to update credit score', 400);
-        }
-        await session.commitTransaction();
-        return updatedCreditScore;
-    }
-
-    static async addCreditScoreHistory(userId: string, score: number, session: ClientSession) {
-        const history = await CreditScoreRepository.addCreditScoreHistory(userId, score, session);
+    static async updateCreditScore(userId: string, scoreChange: number, reason:string, session?: ClientSession) {
+        const history = await CreditScoreRepository.updateCreditScoreHistory(userId, scoreChange, reason, session);
         if (!history) {
             throw new ApiError('Failed to add credit score history', 400);
         }
-        await session.commitTransaction();
         return history;
     }
 }

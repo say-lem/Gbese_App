@@ -92,13 +92,14 @@ export default class LoanService {
 		borrowerId: string,
 		lenderId: string,
 		amount: number,
-		loanId: string
+		loanId: string,
+		session?: ClientSession
 	) {
 		// This method should handle the payment of due loans
 		// It should check the repayment schedule and update the loan status accordingly
 		// You can use the loanRepository to fetch loans and update their status
 
-		const loan = await LoanRepository.getLoanById(loanId);
+		const loan = await LoanRepository.getLoanById(loanId, session);
 
 		if (!loan) {
 			throw new ApiError("loan not found", 404);
@@ -121,6 +122,7 @@ export default class LoanService {
 
 		const UpdatedLoan = await LoanRepository.UpdateLoan(loanId, {
 			repaymentProgress:
+			// updates the percentage loan payment proogress
 				loan.repaymentSchedule.length == 0
 					? 100
 					: Math.round(((loan.repaymentProgress + 1) / loan.repaymentSchedule.length) * 100),
@@ -128,7 +130,7 @@ export default class LoanService {
 			isOverdue: false,
 			missedPaymentCount: 0,
 			lastPaymentDate: new Date(),
-		});
+		}, session);
 
 		if (!UpdatedLoan) {
 			throw new ApiError("Unable to update loan", 400);
