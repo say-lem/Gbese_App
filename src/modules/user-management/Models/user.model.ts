@@ -1,5 +1,6 @@
 import mongoose, { Schema, Document,Types } from 'mongoose';
 import { IUser } from '../../../common/interfaces/user';
+import { NEW_USER_CREDIT_SCORE } from '../../../config/constants';
 
 interface IUserDocument extends Omit<IUser, '_id'>, Document<Types.ObjectId> {}
 
@@ -18,9 +19,10 @@ const userSchema = new Schema<IUserDocument>({
   phoneNumber: String,
   kycDetails: kycSchema,
   registrationDate: { type: Date, required: true, default: Date.now },
-  baseCreditScore: { type: Number, default: 500 },
+  baseCreditScore: { type: Number, default: NEW_USER_CREDIT_SCORE },
   deviceFingerprints: [String],
   ipAddresses: [String],
+  walletAddress: {type: String, unique: true},
   gbeseTokenBalance: { type: Number, default: 0 },
   role: { type: String, enum: ['user', 'admin', 'lender'], default: 'user' },
   isKYCVerified: { type: Boolean, default: false },

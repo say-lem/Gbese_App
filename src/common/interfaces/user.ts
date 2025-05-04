@@ -13,6 +13,7 @@ export interface IUser {
   baseCreditScore?: number;
   deviceFingerprints?: string[];
   ipAddresses?: string[];
+  walletAddress: string;
   gbeseTokenBalance?: number;
   role: "user" | "admin" | "lender";
   isKYCVerified: boolean;
@@ -27,6 +28,7 @@ export interface IUserResponse {
   phoneNumber?: string;
   registrationDate: Date;
   baseCreditScore?: number;
+  walletAddress: string;
   gbeseTokenBalance?: number;
   role: "user" | "admin" | "lender";
   isKYCVerified: boolean;
