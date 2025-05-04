@@ -3,6 +3,7 @@ import { ILoan } from "./../../../common/interfaces/loan";
 import { ILoanOffer } from "../../../common/interfaces/loanOffer";
 import { ILoanRequest } from "../../../common/interfaces/loanRequest";
 import { paginate } from "../../../utils/Paginate";
+import { ClientSession } from "mongoose";
 
 export default class LoanRepository {
 	// Loan Request Methods
@@ -17,8 +18,8 @@ export default class LoanRepository {
 		});
 	}
 
-	static async getLoanRequestById(loanRequestId: string) {
-		return LoanRequestModel.findById(loanRequestId).exec();
+	static async getLoanRequestById(loanRequestId: string, session?: ClientSession) {
+		return LoanRequestModel.findById(loanRequestId).session(session?? null).exec();
 	}
 
 	static async getUserLoanRequests(
@@ -68,8 +69,9 @@ export default class LoanRepository {
 	}
 
 	// Loan Methods
-	static async createLoan(data: Partial<ILoan>) {
-		return await LoanModel.create({
+	static async createLoan(data: Partial<ILoan>, session?: ClientSession) {
+
+		const loan = new LoanModel ({
 			borrowerId: data.borrowerId,
 			lenderId: data.lenderId,
 			principalAmount: data.principalAmount,
@@ -87,10 +89,13 @@ export default class LoanRepository {
 			tokenId: data.tokenId,
 			repaymentMethod: data.repaymentMethod,
 		});
+
+
+		return await loan.save({ session });
 	}
 
-	static async getLoanById(loanId: string) {
-		return LoanModel.findById(loanId).exec();
+	static async getLoanById(loanId: string, session?: ClientSession) {
+		return LoanModel.findById(loanId).session(session ?? null).exec();
 	}
 
 	static async getUserLoans(userId: string, page: number, limit: number) {
@@ -100,11 +105,11 @@ export default class LoanRepository {
 		});
 	}
 
-	static async UpdateLoan(loanId: string, data: Partial<ILoan>) {
+	static async UpdateLoan(loanId: string, data: Partial<ILoan>, session?: ClientSession) {
 		return await LoanModel.findByIdAndUpdate(
 			loanId,
 			{ $set: data },
-			{ new: true }
+			{ new: true, session }
 		);
 	}
 }

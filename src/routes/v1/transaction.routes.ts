@@ -6,6 +6,7 @@ const router = Router();
 
 router.post('/deposit', authenticate, TransactionController.deposit);
 router.post('/withdraw', authenticate, TransactionController.withdraw);
+router.post("/loan/pay-due", authenticate, TransactionController.payDueLoan);
 router.get('/', authenticate, TransactionController.history); 
 
 export default router;

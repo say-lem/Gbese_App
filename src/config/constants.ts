@@ -35,3 +35,10 @@ export const MASTER_MNEMONIC = getEnvironmentVariable(
 	"MASTER_MNEMONIC",
 	"test test test test test test test test test test test junk"
 );
+
+// Loan constants
+export const MAX_LOAN_LIMIT = 1000000 // 1 million
+export const INITIAL_LOAN_LIMIT = 10000 // 10 thousand
+export const LOAN_INTEREST = 0.05 // 5% interest rate
+export const CREDIT_SCORE_REDUCTION = 0.1 // 10% Every failed day
+export const NEW_USER_CREDIT_SCORE = 10 // credit score for every initial loan amount

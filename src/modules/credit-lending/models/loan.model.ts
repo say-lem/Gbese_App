@@ -20,7 +20,7 @@ const loanSchema = new Schema<ILoanDocument>(
 			{
 				dueDate: { type: Date, required: true },
 				amountDue: { type: Number, required: true },
-			},
+			}
 		],
 		repaymentProgress: { type: Number, required: true },
 		isOverdue: { type: Boolean, required: true },
@@ -40,12 +40,18 @@ const loanSchema = new Schema<ILoanDocument>(
                 delete ret.id; // Remove the virtual id field
 				delete ret._id; // Remove the default _id field
 				delete ret.__v; // Remove the version key
+				ret.repaymentSchedule.forEach((item: any) => {
+					delete item._id // Remove the _id field of repaymentSchedule
+				});
 			},
 		},
 		toObject: {
 			virtuals: true,
             transform: (doc, ret) => {
                 delete ret.id; // Remove the virtual id field
+				ret.repaymentSchedule.forEach((item: any) => {
+					delete item._id // Remove the _id field of repaymentSchedule
+				});
             }
 		},
 	}
