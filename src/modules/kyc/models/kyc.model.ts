@@ -1,7 +1,8 @@
 import mongoose, { Schema, Document, Types } from 'mongoose';
-import { IKYCVerification } from '../../../common/interfaces/KYC';
+import { IKYCVerification, IKYCMetadata } from '../../../common/interfaces/KYC';
 
 interface IKYCVerificationDocument extends Omit<IKYCVerification, 'userId'>, Document<Types.ObjectId> {
+  verification: any;
   userId: Types.ObjectId;
 }
 
@@ -21,6 +22,8 @@ const kycVerificationSchema = new Schema<IKYCVerificationDocument>({
     },
   isDeleted: { type: Boolean, default: false }
 });
+
+
 
 const KYCVerificationModel = mongoose.model<IKYCVerificationDocument>('KYCVerification', kycVerificationSchema);
 export { KYCVerificationModel, IKYCVerificationDocument };
