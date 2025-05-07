@@ -4,5 +4,5 @@ import { checkKycSubmission } from '../../middleware/kyc.middleware';
 
 const router = Router();
 
-router.post('/submit', checkKycSubmission, KYCController.submitKyc);
-router.post('/review', KYCController.verifyKyc);
+router.post('/kyc/submit', checkKycSubmission, KYCController.submitKyc);
+router.post('/kyc/review', KYCController.verifyKyc);
