@@ -15,13 +15,13 @@ export class WalletService {
 
 		const newWallet = new WalletModel({
 			userId,
-			tokenBalance: 0,
+			tokenUSDBalance: 0,
 			fiatBalance: 0,
 		});
 		return newWallet.save();
 	}
 
-	static async updateTokenBalance(userId: string, amount: number, session: ClientSession) {
+	static async updateTokenUSDBalance(userId: string, amount: number, session: ClientSession) {
 		const checkWallet = await WalletModel.findOne({ userId }).session(session ?? null);
 		if (!checkWallet) throw new ApiError("Wallet not found", 404);
 
@@ -30,8 +30,8 @@ export class WalletService {
 		// For withdrawal, amount should be less than or equal to the user's current balance
 		// then Updates the user's token balance accordingly
 		const updatedWallet = await WalletModel.findOneAndUpdate(
-      { userId, tokenBalance: { $gte: amount <= 0 ? -amount : 0 } },
-      { $inc: { tokenBalance: amount } },
+      { userId, tokenUSDBalance: { $gte: amount <= 0 ? -amount : 0 } },
+      { $inc: { tokenUSDBalance: amount } },
       { new: true, session }
     );
     if (!updatedWallet) throw new ApiError("insufficient balance", 400);

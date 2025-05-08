@@ -14,6 +14,8 @@ export interface IUser {
   deviceFingerprints?: string[];
   ipAddresses?: string[];
   walletAddress: string;
+  usdcBalance?: number;
+  ethBalance?: number;
   gbeseTokenBalance?: number;
   role: "user" | "admin" | "lender";
   isKYCVerified: boolean;
@@ -29,6 +31,8 @@ export interface IUserResponse {
   registrationDate: Date;
   baseCreditScore?: number;
   walletAddress: string;
+  usdcBalance?: number;
+  ethBalance?: number;
   gbeseTokenBalance?: number;
   role: "user" | "admin" | "lender";
   isKYCVerified: boolean;

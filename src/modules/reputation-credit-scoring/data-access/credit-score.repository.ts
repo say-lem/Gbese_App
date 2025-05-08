@@ -13,7 +13,7 @@ export default class CreditScoreRepository {
 		data: Partial<ICreditScore>,
 		session?: ClientSession
 	) {
-		const creditScore = new CreditScoreModel({ data });
+		const creditScore = new CreditScoreModel({...data});
 
 		return await creditScore.save({ session });
 	}
