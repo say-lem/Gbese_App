@@ -7,21 +7,26 @@ import CreditScoreService from "../../reputation-credit-scoring/services/credit-
 import ApiError from "../../../utils/ApiError";
 import mongoose from "mongoose";
 import { LOAN_INTEREST } from "../../../config/constants";
+import NotificationService from "../../notification-service/services/notification.service";
 
 export default class CreditLendingController {
-
-
-	static async createNewLoanRequest(req: AuthRequest, res: Response, next: NextFunction) {
-
+	static async createNewLoanRequest(
+		req: AuthRequest,
+		res: Response,
+		next: NextFunction
+	) {
 		try {
 			const userId = req.user?.userId!;
 			const { amount, term, interestRate } = req.body;
 			const eligableLoan = await CreditScoreService.checkLoanLimit(userId!);
-			if (eligableLoan < amount ) {
-				throw new ApiError(`Your Eligible loan limit is ${eligableLoan.toLocaleString()}`, 400);
+			if (eligableLoan < amount) {
+				throw new ApiError(
+					`Your Eligible loan limit is ${eligableLoan.toLocaleString()}`,
+					400
+				);
 			}
 
-			if (interestRate !== LOAN_INTEREST){
+			if (interestRate !== LOAN_INTEREST) {
 				throw new ApiError("Interest Rate is not Valid", 400);
 			}
 			const loanRequest = await LoanRepository.createLoanRequest(userId!, {
@@ -33,6 +38,10 @@ export default class CreditLendingController {
 				return next(new ApiError("Failed to create loan request", 400));
 			}
 			res.status(201).json(loanRequest);
+			await NotificationService.notifyUserLoanRequest(userId!, {
+				success: true,
+				message: "Loan Request created successfully",
+			});
 		} catch (error) {
 			if (error instanceof ApiError) {
 				return next(new ApiError(error.message, error.statusCode));
@@ -41,7 +50,11 @@ export default class CreditLendingController {
 		}
 	}
 
-	static async getLoanRequest(req: AuthRequest, res: Response, next: NextFunction) {
+	static async getLoanRequest(
+		req: AuthRequest,
+		res: Response,
+		next: NextFunction
+	) {
 		try {
 			const loanRequestId = req.params.loanRequestId;
 			const loanRequest = await LoanRepository.getLoanRequestById(
@@ -62,7 +75,11 @@ export default class CreditLendingController {
 		}
 	}
 
-	static async getUserLoanRequests(req: AuthRequest, res: Response, next: NextFunction) {
+	static async getUserLoanRequests(
+		req: AuthRequest,
+		res: Response,
+		next: NextFunction
+	) {
 		try {
 			const userId = req.user?.userId!;
 			const page = parseInt(req.query.page as string) || 1;
@@ -84,7 +101,11 @@ export default class CreditLendingController {
 		}
 	}
 
-	static async createLenderLoanOffer(req: AuthRequest, res: Response, next: NextFunction) {
+	static async createLenderLoanOffer(
+		req: AuthRequest,
+		res: Response,
+		next: NextFunction
+	) {
 		try {
 			const userId = req.user?.userId!;
 			const { loanRequestId, terms, interestRate } = req.body;
@@ -101,9 +122,12 @@ export default class CreditLendingController {
 			if (!loanOffer) {
 				return next(new ApiError("Failed to create loan offer", 400));
 			}
-			const approvedLoanRequest = await LenderService.approveLoanRequest(userId!, loanOffer.loanRequestId);
+			const approvedLoanRequest = await LenderService.approveLoanRequest(
+				userId!,
+				loanOffer.loanRequestId
+			);
 			if (!approvedLoanRequest) {
-				return next( new ApiError("Failed to approve loan request", 400));
+				return next(new ApiError("Failed to approve loan request", 400));
 			}
 			res.status(201).json(approvedLoanRequest);
 		} catch (error) {
@@ -114,12 +138,14 @@ export default class CreditLendingController {
 		}
 	}
 
-	static async getLoanOfferById(req: AuthRequest, res: Response, next: NextFunction) {
+	static async getLoanOfferById(
+		req: AuthRequest,
+		res: Response,
+		next: NextFunction
+	) {
 		try {
 			const { loanOfferId } = req.params;
-			const data = await LoanRepository.getLoanOfferById(
-				loanOfferId
-			);
+			const data = await LoanRepository.getLoanOfferById(loanOfferId);
 			if (!data) {
 				return next(new ApiError("No loan offers found", 404));
 			}
@@ -132,25 +158,30 @@ export default class CreditLendingController {
 		}
 	}
 
-    static  async getLoanOfferByRequestId(req: AuthRequest, res: Response, next: NextFunction) {
-        try {
-            const { loanRequestId } = req.params;
-            const data = await LoanRepository.getLoanOfferByLoanRequestId(loanRequestId);
-            if (!data) {
-                next(new ApiError("Loan offer not found", 404));
-                return;
-            }
-            res.status(200).json(data);
-        }catch (error) {
+	static async getLoanOfferByRequestId(
+		req: AuthRequest,
+		res: Response,
+		next: NextFunction
+	) {
+		try {
+			const { loanRequestId } = req.params;
+			const data = await LoanRepository.getLoanOfferByLoanRequestId(
+				loanRequestId
+			);
+			if (!data) {
+				next(new ApiError("Loan offer not found", 404));
+				return;
+			}
+			res.status(200).json(data);
+		} catch (error) {
 			if (error instanceof ApiError) {
 				return next(new ApiError(error.message, error.statusCode));
 			}
 			return next(new ApiError("Internal Server Error", 500));
 		}
-    }
+	}
 
 	static async createLoan(req: AuthRequest, res: Response, next: NextFunction) {
-
 		const session = await mongoose.startSession();
 
 		try {
@@ -158,13 +189,13 @@ export default class CreditLendingController {
 			
 			const { loanRequestId, lenderId } = req.body;
 
-			
-
-			const loanTransaction = await session.withTransaction ( async () => {
+			const loanTransaction = await session.withTransaction(async () => {
 				if (lenderId !== userId) {
-					return next(new ApiError("User is not authorized to create a loan", 400));
+					return next(
+						new ApiError("User is not authorized to create a loan", 400)
+					);
 				}
-	
+
 				if (!lenderId) {
 					return next(new ApiError("Lender ID is required", 400));
 				}
@@ -184,53 +215,60 @@ export default class CreditLendingController {
 				if (loanRequest.isDeleted) {
 					return next(new ApiError("Loan request has been deleted", 400));
 				}
+
+				const borrowerId = loanRequest.userId.toString();
+
 				const data = await LoanService.createBorrowerLoan(
 					lenderId,
-					loanRequest!,
+					loanRequest,
 					session
 				);
 				const transactionData = await LoanService.disburseLoan(
 					lenderId,
-					loanRequest.userId!.toString(),
+					borrowerId,
 					loanRequest.amount!
 				);
-	
-				// TODO: Add logic to notify both lender and borrower about the loan disbursement
-				// e.g using a notification service
-				// await NotificationService.notifyUser(lenderId, "Loan disbursed", lenderTx);
-				// await NotificationService.notifyUser(loanRequest.userId!.toString(), "Loan received", borrowerTx);
-
-				await session.commitTransaction();
-				return data;
-			})
-
-			if (loanTransaction){
-				res.status(200).json({ message: "Loan created successfully", data: loanTransaction });
-			}
 				
+				await session.commitTransaction();
+				await NotificationService.notifyTransactionDone(lenderId, borrowerId, transactionData)
 
+				return data;
+			});
+
+			if (loanTransaction) {
+				res
+					.status(200)
+					.json({
+						message: "Loan created successfully",
+						data: loanTransaction,
+					});
+			}
 		} catch (error) {
-			if (session.inTransaction()){
+			if (session.inTransaction()) {
 				await session.abortTransaction();
 			}
 
 			console.log(error);
-			
+
 			if (error instanceof ApiError) {
 				return next(new ApiError(error.message, error.statusCode));
 			}
 			return next(new ApiError("Internal Server Error", 500));
 		} finally {
-			await session.endSession()
+			await session.endSession();
 		}
 	}
 
-	static async getLoanById(req: AuthRequest, res: Response, next: NextFunction) {
+	static async getLoanById(
+		req: AuthRequest,
+		res: Response,
+		next: NextFunction
+	) {
 		try {
 			const { loanId } = req.params;
 			const data = await LoanRepository.getLoanById(loanId);
 			if (!data) {
-                return next(new ApiError("Loan not found", 404));
+				return next(new ApiError("Loan not found", 404));
 			}
 			res.status(200).json(data);
 		} catch (error) {
@@ -241,7 +279,11 @@ export default class CreditLendingController {
 		}
 	}
 
-	static async getLenderLoans(req: AuthRequest, res: Response, next: NextFunction) {
+	static async getLenderLoans(
+		req: AuthRequest,
+		res: Response,
+		next: NextFunction
+	) {
 		try {
 			const userId = req.user?.userId!;
 			const page = parseInt(req.query.page as string) || 1;
