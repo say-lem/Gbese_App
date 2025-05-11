@@ -47,7 +47,7 @@ class WebSocketManager {
 			},
 		});
 
-		await this.redisClient.connect().catch(console.error);
+		await this.redisClient.connect();
 		this.redisClient.on("error", (err: any) => {
 			console.error("Redis Client Error:", err);
 		});
@@ -94,7 +94,6 @@ class WebSocketManager {
 		ws: WebSocket,
 		request: IncomingMessage
 	): Promise<void> {
-		console.info("Total connected clients:", this.wss.clients.size);
 		const userId = request.headers["userId"] as string;
 
 		if (!userId) {
@@ -128,10 +127,6 @@ class WebSocketManager {
 						nonChannelMessages.push(parsedMsg);
 					}
 				});
-
-				console.log("length of chmsg:", channelMessages.length);
-				console.log("length of non chmsg:", nonChannelMessages.length);
-
 				this.sendQueuedMessages(ws, channelMessages, 1000);
 				await this.redisClient.del(`messages:${userId}`);
 
@@ -145,13 +140,10 @@ class WebSocketManager {
 				}
 			}
 		}
-
-		console.info("Total connected clients:", this.wss.clients.size);
 		ws.send(JSON.stringify({ message: "Connected" }));
 		ws.on("message", (message: Buffer) => {
 			try {
 				const data: WebSocketMessage = JSON.parse(message.toString());
-				this.handleMessage(ws, data, userId);
 			} catch (error) {
 				console.error("Failed to parse message:", error);
 				ws.send(JSON.stringify({ error: "Invalid message format" }));
@@ -162,27 +154,11 @@ class WebSocketManager {
 		ws.on("error", (error) => console.error("WebSocket error:", error));
 	}
 
-	private handleMessage(
-		ws: WebSocket,
-		data: WebSocketMessage,
-		userId: string
-	): void {
-		const user = this.userSockets.get(userId);
-
-		if (data.type === "register" && user) {
-			console.log(`User registered`);
-			ws.send(JSON.stringify({ type: "registered", success: true }));
-			console.info("Total connected clients:", this.wss.clients.size);
-		}
-	}
 
 	private handleDisconnection(ws: WebSocket): void {
-		console.log("Client disconnected");
 		for (const [userId, socket] of this.userSockets.entries()) {
 			if (socket === ws) {
 				this.userSockets.delete(userId);
-				console.log(`User ${userId} unregistered`);
-				console.info("Total connected clients:", this.wss.clients.size);
 				break;
 			}
 		}
