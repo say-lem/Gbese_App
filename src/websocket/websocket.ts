@@ -49,7 +49,7 @@ class WebSocketManager {
 
 		await this.redisClient.connect();
 		this.redisClient.on("error", (err: any) => {
-			console.error("Redis Client Error:", err);
+			//console.error("Redis Client Error:", err);
 		});
 	}
 
