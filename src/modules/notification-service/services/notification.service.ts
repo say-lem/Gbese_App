@@ -11,5 +11,4 @@ export default class NotificationService {
         transactionWS.sendNotification(lenderId, messagePayload.senderTransaction);
         transactionWS.sendNotification(borrowerId, messagePayload.recipientTransaction);
     }
-
 }

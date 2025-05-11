@@ -40,6 +40,13 @@ export const GBESE_CONTRACT_ADDRESS = getEnvironmentVariable("GBESE_CONTRACT_ADD
 export const BASE_TESTNET_RPC_URL = getEnvironmentVariable( "BASE_TESTNET_RPC_URL");
 export const DEFAULT_GAS_FUNDER_PRIVATE_KEY = getEnvironmentVariable("DEFAULT_GAS_FUNDER_PRIVATE_KEY");
 
+// Redis variables for notifications
+export const REDIS_USERNAME = getEnvironmentVariable("REDIS_USERNAME");
+export const REDIS_PASSWORD = getEnvironmentVariable("REDIS_PASSWORD");
+export const REDIS_HOST = getEnvironmentVariable("REDIS_HOST");
+export const REDIS_PORT = getEnvironmentVariableNumber("REDIS_PORT");
+
+
 // Loan constants
 export const MAX_LOAN_LIMIT = 1000000 // 1 million
 export const INITIAL_LOAN_LIMIT = 10000 // 10 thousand
