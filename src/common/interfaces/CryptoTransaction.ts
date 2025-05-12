@@ -8,7 +8,7 @@ export interface ICryptoTransaction {
   toAddress: string;
   amount: number;
   Direction: "INTERNAL" | "EXTERNAL";
-  TransactionType: "DEPOSIT" | "WITHDRAWAL" | "TRANSFER" | "LOAN";
+  TransactionType: "DEPOSIT" | "WITHDRAWAL" | "TRANSFER" | "LOAN" | "REWARD";
   timestamp: Date;
   status: "PENDING" | "CONFIRMED" | "FAILED";
   currency: "USDC" | "ETH" | "GBESE";

@@ -13,7 +13,7 @@ const cryptoTransactionSchema = new Schema<ICryptoTransactionDocument>({
   TransactionType: {
     type: String,
     required: true,
-    enum: ["DEPOSIT", "WITHDRAWAL", "TRANSFER", "LOAN"],
+    enum: ["DEPOSIT", "WITHDRAWAL", "TRANSFER", "LOAN", "REWARD"],
   },
   amount: { type: Number, required: true },
   timestamp: { type: Date, default: Date.now },

@@ -5,7 +5,8 @@ import {
   BASE_TESTNET_RPC_URL,
   USDC_CONTRACT_ADDRESS,
   ERC20_ABI,
-  DEFAULT_GAS_FUNDER_PRIVATE_KEY
+  DEFAULT_GAS_FUNDER_PRIVATE_KEY,
+  GBESE_CONTRACT_ADDRESS,
 } from "../../../config/constants";
 import { ItxData } from "../../../common/interfaces/TxData";
 import { UserModel } from "../../user-management/Models/user.model";
@@ -13,7 +14,7 @@ import { cryptoTransactionModel } from "../models/cryptoTransaction.model";
 import { WalletModel } from "../../wallet-management/models/wallet.model";
 
 // Define the interface for the USDC contract
-interface USDC extends ethers.BaseContract {
+interface ERC20 extends ethers.BaseContract {
   balanceOf(owner: string): Promise<bigint>;
   transfer(
     to: string,
@@ -35,7 +36,14 @@ const usdcContract = new ethers.Contract(
   USDC_CONTRACT_ADDRESS,
   ERC20_ABI,
   provider
-) as unknown as USDC;
+) as unknown as ERC20;
+
+// Initialize USDC contract interface
+const gbeseContract = new ethers.Contract(
+  GBESE_CONTRACT_ADDRESS,
+  ERC20_ABI,
+  provider
+) as unknown as ERC20;
 
 // Default transaction data structure
 const defaultTxData: ItxData = {
@@ -79,31 +87,6 @@ export class CryptoTransactionService {
       publicKey: wallet.publicKey,
       path: `m/${relativePath}`,
     };
-  };
-
-  // Signs a transaction using the user's derived wallet
-  static signTransaction = async (userId: string, txData: Partial<ItxData>) => {
-    const relativePath = await this.getDerivationPath(userId);
-    const wallet = masterNode.derivePath(relativePath);
-    const walletWithProvider = new ethers.Wallet(wallet.privateKey, provider);
-
-    // Merge with default transaction data
-    const mergedTxData = { ...defaultTxData, ...txData };
-
-    // Create transaction object
-    const tx = {
-      to: mergedTxData.to,
-      value: ethers.parseEther(mergedTxData.amount || "0"),
-      gasLimit: mergedTxData.gasLimit,
-      maxFeePerGas: mergedTxData.maxFeePerGas,
-      maxPriorityFeePerGas: mergedTxData.maxPriorityFeePerGas,
-      nonce:
-        mergedTxData.nonce ||
-        (await provider.getTransactionCount(wallet.address)),
-      chainId: mergedTxData.chainId,
-    };
-
-    return walletWithProvider.signTransaction(tx);
   };
 
   // gets the USDC balance of a user
@@ -175,7 +158,6 @@ export class CryptoTransactionService {
     return transaction._id.toString();
   };
 
-  
   // Transfers USDC to an external address (on-chain)
   static externalTransfer = async (
     fromUserId: string,
@@ -184,44 +166,49 @@ export class CryptoTransactionService {
     amount: string,
     currency: string = "USDC"
   ): Promise<string> => {
-    const GAS_THRESHOLD = ethers.parseEther("0.0002"); 
+    const GAS_THRESHOLD = ethers.parseEther("0.0002");
     const GAS_TOPUP_AMOUNT = ethers.parseEther("0.0001");
-  
+
     const fromUser = await UserModel.findOne({ username: fromUserName });
-  
+
     if (!fromUser?.walletAddress) {
       throw new Error("User does not have a wallet");
     }
-  
+
     const relativePath = await this.getDerivationPath(fromUserId);
     const wallet = masterNode.derivePath(relativePath);
     const walletWithProvider = new ethers.Wallet(wallet.privateKey, provider);
-  
+
     // Check ETH balance for gas
     const ethBalance = await provider.getBalance(walletWithProvider.address);
-  
+
     if (ethBalance < GAS_THRESHOLD) {
-      console.log(`Funding gas for user ${fromUserName} from sponsor wallet...`);
-  
-      const gasFunder = new ethers.Wallet(DEFAULT_GAS_FUNDER_PRIVATE_KEY!, provider);
+      console.log(
+        `Funding gas for user ${fromUserName} from sponsor wallet...`
+      );
+
+      const gasFunder = new ethers.Wallet(
+        DEFAULT_GAS_FUNDER_PRIVATE_KEY!,
+        provider
+      );
       const tx = await gasFunder.sendTransaction({
         to: walletWithProvider.address,
         value: GAS_TOPUP_AMOUNT,
       });
-  
+
       await tx.wait();
       console.log(`Gas funded with tx: ${tx.hash}`);
     }
-  
-    const usdcWithSigner = usdcContract.connect(walletWithProvider) as USDC;
+
+    const usdcWithSigner = usdcContract.connect(walletWithProvider) as ERC20;
     const balance = await usdcContract.balanceOf(walletWithProvider.address);
     const decimals = await usdcContract.decimals();
     const parsedAmount = ethers.parseUnits(amount, decimals);
-  
+
     if (balance < parsedAmount) {
       throw new Error("Insufficient USDC balance");
     }
-  
+
     const transaction = new cryptoTransactionModel({
       fromUserName,
       toUserName: "null",
@@ -234,19 +221,19 @@ export class CryptoTransactionService {
       TransactionType: "WITHDRAWAL",
     });
     await transaction.save();
-  
+
     try {
       const tx = await usdcWithSigner.transfer(toAddress, parsedAmount);
-  
+
       transaction.txHash = tx.hash;
       await transaction.save();
-  
+
       const receipt = await tx.wait();
       transaction.status = "CONFIRMED";
       await transaction.save();
-  
+
       await this.updateUserBalance(fromUserName, amount, currency, "subtract");
-  
+
       return tx.hash;
     } catch (error) {
       transaction.status = "FAILED";
@@ -254,7 +241,72 @@ export class CryptoTransactionService {
       throw error;
     }
   };
-  
+
+  // GBESE TOKEN DISBURSEMENT FOR LOAN PAYOUTS
+  static gbeseTokenRewards = async (
+    toAddress: string,
+    amount?: string,
+    currency?: string
+  ): Promise<string> => {
+    amount = amount || "5";
+    currency = "GBESE";
+
+    if (!toAddress) {
+      throw new Error("No Wallet Found");
+    }
+
+    const walletWithProvider = new ethers.Wallet(
+      DEFAULT_GAS_FUNDER_PRIVATE_KEY!,
+      provider
+    );
+
+    const gbeseWithSigner = gbeseContract.connect(walletWithProvider) as ERC20;
+    const balance = await gbeseContract.balanceOf(walletWithProvider.address);
+    const decimals = await gbeseContract.decimals();
+    const parsedAmount = ethers.parseUnits(amount, decimals);
+
+    if (balance < parsedAmount) {
+      throw new Error("Insufficient GBESE balance");
+    }
+
+    const transaction = new cryptoTransactionModel({
+      fromAddress: walletWithProvider.address,
+      toAddress,
+      toUserName: "null",
+      amount: parseFloat(amount),
+      status: "PENDING",
+      currency,
+      Direction: "INTERNAL",
+      TransactionType: "REWARD",
+    });
+    await transaction.save();
+
+    try {
+      const tx = await gbeseWithSigner.transfer(toAddress, parsedAmount);
+
+      transaction.txHash = tx.hash;
+      await transaction.save();
+
+      const receipt = await tx.wait();
+      transaction.status = "CONFIRMED";
+      await transaction.save();
+
+      // update users balance
+      await UserModel.findOneAndUpdate(
+        { walletAddress: toAddress },
+        {
+          $inc: { gbeseTokenBalance: parseFloat(amount) },
+        },
+        { new: true }
+      );
+
+      return tx.hash;
+    } catch (error) {
+      transaction.status = "FAILED";
+      await transaction.save();
+      throw error;
+    }
+  };
 
   //  Updates balances for users involved in a transaction
   static updateUserBalances = async (
@@ -333,7 +385,7 @@ export class CryptoTransactionService {
   };
 
   //  Gets transaction history for a user
-  static getUserTransactionHistory = async (userName:string) => {
+  static getUserTransactionHistory = async (userName: string) => {
     return await cryptoTransactionModel
       .find({
         $or: [{ fromUserName: userName }, { toUserName: userName }],
