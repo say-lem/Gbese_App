@@ -1,5 +1,4 @@
 import bcrypt from "bcryptjs";
-import jwt from "jsonwebtoken";
 import { UserModel, IUserDocument } from "../Models";
 import { IUserResponse } from "../../../common/interfaces/user";
 import { WalletService } from "../../wallet-management/services/wallet.service";
@@ -10,7 +9,6 @@ import {
 } from "../../../utils/auth.utils";
 import { CryptoTransactionService } from "../../transaction-managemment/services/cryptoTransaction.service";
 import CreditScoreRepository from "../../reputation-credit-scoring/data-access/credit-score.repository";
-import { Types } from "mongoose";
 import { generateOTP, otpExpiresIn } from '../../../utils/otp.utils';
 import { sendVerificationEmail } from '../../../utils/emial.utils';
 import PendingUserModel from '../Models/pendingUser.model';
@@ -159,4 +157,18 @@ export class AuthService {
     };
   }
   
+  static async getPublicUserById(userId: string) {
+  const user = await UserModel.findById(userId);
+
+  if (!user) throw new ApiError('User not found', 404);
+
+  return {
+    userId: user._id.toString(),
+    username: user.username,
+    email: user.email,
+    phoneNumber: user.phoneNumber,
+    baseCreditScore: user.baseCreditScore,
+  };
+}
+
 }

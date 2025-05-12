@@ -77,7 +77,7 @@ static async getUserByIdPublic(req: Request, res: Response, next: NextFunction) 
   try {
     const { id } = req.params;
 
-    const user = await AuthService.getUserById(id);
+    const user = await AuthService.getPublicUserById(id);
     return next(res.status(200).json(user));
   } catch (error: any) {
     return next(new ApiError(error.message, error.statusCode || 500));
