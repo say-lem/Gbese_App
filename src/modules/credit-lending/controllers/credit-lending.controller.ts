@@ -14,7 +14,7 @@ export default class CreditLendingController {
 	static async createNewLoanRequest(req: AuthRequest, res: Response, next: NextFunction) {
 
 		try {
-			const userId = req.userId;
+			const userId = req.user?.userId!;
 			const { amount, term, interestRate } = req.body;
 			const eligableLoan = await CreditScoreService.checkLoanLimit(userId!);
 			if (eligableLoan < amount ) {
@@ -64,7 +64,7 @@ export default class CreditLendingController {
 
 	static async getUserLoanRequests(req: AuthRequest, res: Response, next: NextFunction) {
 		try {
-			const userId = req.userId;
+			const userId = req.user?.userId!;
 			const page = parseInt(req.query.page as string) || 1;
 			const limit = parseInt(req.query.limit as string) || 10;
 			const loanRequests = await LoanRepository.getUserLoanRequests(
@@ -86,7 +86,7 @@ export default class CreditLendingController {
 
 	static async createLenderLoanOffer(req: AuthRequest, res: Response, next: NextFunction) {
 		try {
-			const userId = req.userId;
+			const userId = req.user?.userId!;
 			const { loanRequestId, terms, interestRate } = req.body;
 
 			if (interestRate !== LOAN_INTEREST) {
@@ -154,7 +154,7 @@ export default class CreditLendingController {
 		const session = await mongoose.startSession();
 
 		try {
-			const userId = req.userId;
+			const userId = req.user?.userId!;
 			
 			const { loanRequestId, lenderId } = req.body;
 
@@ -243,7 +243,7 @@ export default class CreditLendingController {
 
 	static async getLenderLoans(req: AuthRequest, res: Response, next: NextFunction) {
 		try {
-			const userId = req.userId;
+			const userId = req.user?.userId!;
 			const page = parseInt(req.query.page as string) || 1;
 			const limit = parseInt(req.query.limit as string) || 10;
 			const data = await LoanRepository.getUserLoans(userId!, page, limit);
