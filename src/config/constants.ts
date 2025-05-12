@@ -36,6 +36,7 @@ export const MASTER_MNEMONIC = getEnvironmentVariable(
 	"test test test test test test test test test test test junk"
 );
 export const USDC_CONTRACT_ADDRESS = getEnvironmentVariable("USDC_CONTRACT_ADDRESS");
+export const GBESE_CONTRACT_ADDRESS = getEnvironmentVariable("GBESE_CONTRACT_ADDRESS");
 export const BASE_TESTNET_RPC_URL = getEnvironmentVariable( "BASE_TESTNET_RPC_URL");
 export const DEFAULT_GAS_FUNDER_PRIVATE_KEY = getEnvironmentVariable("DEFAULT_GAS_FUNDER_PRIVATE_KEY");
 
@@ -55,4 +56,3 @@ export const ERC20_ABI = [
   "function name() view returns (string)",
   "event Transfer(address indexed from, address indexed to, uint256 value)"
 ];
-
