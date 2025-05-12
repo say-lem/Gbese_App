@@ -20,12 +20,12 @@ const paystack = axios.create({
 export class PaystackService {
   static async initializeTransaction(payload: {
     email: string;
-    amount: number; // in kobo: e.g. 1000 = ₦10
+    amount: number; 
     callback_url: string;
   }) {
     try {
       const response = await paystack.post('/transaction/initialize', payload);
-      return response.data.data; // contains authorization_url, reference, etc.
+      return response.data.data; 
     } catch (error: any) {
       throw new Error(error.response?.data?.message || 'Initialization failed');
     }

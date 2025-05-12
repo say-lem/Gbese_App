@@ -17,6 +17,7 @@ export interface IUser {
   usdcBalance?: number;
   ethBalance?: number;
   gbeseTokenBalance?: number;
+  fiatBalance?: number;  
   role: "user" | "admin" | "lender";
   isKYCVerified: boolean;
   isEmailVerified: boolean; 
@@ -39,6 +40,7 @@ export interface IUserResponse {
   usdcBalance?: number;
   ethBalance?: number;
   gbeseTokenBalance?: number;
+  fiatBalance?: number;  
   role: "user" | "admin" | "lender";
   isKYCVerified: boolean;
   isEmailVerified: boolean; 

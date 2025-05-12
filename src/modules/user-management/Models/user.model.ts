@@ -31,6 +31,7 @@ const userSchema = new Schema<IUserDocument>({
   usdcBalance: { type: Number, default: 0 },
   ethBalance: { type: Number, default: 0 },
   gbeseTokenBalance: { type: Number, default: 0 },
+  fiatBalance: { type: Number, default: 0 },
   role: { type: String, enum: ['user', 'admin', 'lender'], default: 'user' },
   isKYCVerified: { type: Boolean, default: false },
   isEmailVerified: { type: Boolean, default: false }, 
