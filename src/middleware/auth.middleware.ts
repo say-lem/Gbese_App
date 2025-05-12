@@ -4,7 +4,7 @@ import jwt from 'jsonwebtoken';
 const JWT_SECRET = process.env.JWT_SECRET || 'secret';
 
 export interface AuthRequest extends Request {
-  userId?: string;
+  user?: { userId: string };
 }
 
 export const authenticate = (req: AuthRequest, res: Response, next: NextFunction) => {
@@ -18,9 +18,10 @@ export const authenticate = (req: AuthRequest, res: Response, next: NextFunction
 
   try {
     const decoded = jwt.verify(token, JWT_SECRET) as { userId: string };
-    req.userId = decoded.userId;
+    req.user = { userId: decoded.userId }; 
     next();
   } catch (err) {
     return next(res.status(403).json({ error: 'Forbidden. Invalid token.' }));
   }
 };
+
