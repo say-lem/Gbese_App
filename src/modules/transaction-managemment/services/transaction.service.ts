@@ -6,18 +6,18 @@ import { UserModel } from "../../user-management/Models";
 export class TransactionService {
 	static async deposit(userId: string, amount: number) {
 		const wallet = await WalletService.updateFiatBalance(userId, amount);
-
+	  
 		const transaction = new TransactionModel({
-			userId,
-			transactionType: "deposit",
-			amount,
-			fiatChange: amount,
-			status: "completed",
-			timestamp: new Date(),
+		  userId,
+		  transactionType: "deposit",
+		  amount,
+		  fiatChange: amount,
+		  status: "completed",
+		  timestamp: new Date(),
 		});
-
+	  
 		return transaction.save();
-	}
+	  }
 
 	static async withdraw(userId: string, amount: number) {
 		const wallet = await WalletService.getWalletByUserId(userId);
