@@ -45,7 +45,8 @@ export const REDIS_USERNAME = getEnvironmentVariable("REDIS_USERNAME");
 export const REDIS_PASSWORD = getEnvironmentVariable("REDIS_PASSWORD");
 export const REDIS_HOST = getEnvironmentVariable("REDIS_HOST");
 export const REDIS_PORT = getEnvironmentVariableNumber("REDIS_PORT");
-
+export const GMAIL_APP_EMAIL = getEnvironmentVariable("GMAIL_APP_EMAIL");
+export const GMAIL_APP_PASSWORD = getEnvironmentVariable("GMAIL_APP_PASSWORD");
 
 // Loan constants
 export const MAX_LOAN_LIMIT = 1000000 // 1 million

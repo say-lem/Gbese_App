@@ -30,6 +30,7 @@ app.use("/api/v1/crypto", CryptoTransactionRouter);
 
 app.get('/', (_req, res) => {
   res.send('Welcome to Gbese API');
+  
 });
 
 app.use(notFound);
