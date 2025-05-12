@@ -2,7 +2,7 @@ import dotenv from "dotenv";
 
 // Determine the environment and load the corresponding file
 const envFile = process.env.NODE_ENV === "production" ? ".env" : ".env.local";
-dotenv.config({ path: envFile });
+dotenv.config();
 
 export const getEnvironmentVariable = (
 	key: string,
@@ -35,6 +35,10 @@ export const MASTER_MNEMONIC = getEnvironmentVariable(
 	"MASTER_MNEMONIC",
 	"test test test test test test test test test test test junk"
 );
+export const USDC_CONTRACT_ADDRESS = getEnvironmentVariable("USDC_CONTRACT_ADDRESS");
+export const GBESE_CONTRACT_ADDRESS = getEnvironmentVariable("GBESE_CONTRACT_ADDRESS");
+export const BASE_TESTNET_RPC_URL = getEnvironmentVariable( "BASE_TESTNET_RPC_URL");
+export const DEFAULT_GAS_FUNDER_PRIVATE_KEY = getEnvironmentVariable("DEFAULT_GAS_FUNDER_PRIVATE_KEY");
 
 // Loan constants
 export const MAX_LOAN_LIMIT = 1000000 // 1 million
@@ -42,3 +46,13 @@ export const INITIAL_LOAN_LIMIT = 10000 // 10 thousand
 export const LOAN_INTEREST = 0.05 // 5% interest rate
 export const CREDIT_SCORE_REDUCTION = 0.1 // 10% Every failed day
 export const NEW_USER_CREDIT_SCORE = 10 // credit score for every initial loan amount
+
+// ERC20 ABI - only methods we need
+export const ERC20_ABI = [
+  "function balanceOf(address owner) view returns (uint256)",
+  "function transfer(address to, uint256 amount) returns (bool)",
+  "function decimals() view returns (uint8)",
+  "function symbol() view returns (string)",
+  "function name() view returns (string)",
+  "event Transfer(address indexed from, address indexed to, uint256 value)"
+];

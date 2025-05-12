@@ -2,7 +2,7 @@ import { IKYCMetadata } from "./KYC";
 import { Types } from 'mongoose';
 
 export interface IUser {
-    _id?: Types.ObjectId;
+  _id?: Types.ObjectId;
   userId?: string;
   username: string;
   passwordHash: string;
@@ -14,9 +14,16 @@ export interface IUser {
   deviceFingerprints?: string[];
   ipAddresses?: string[];
   walletAddress: string;
+  usdcBalance?: number;
+  ethBalance?: number;
   gbeseTokenBalance?: number;
   role: "user" | "admin" | "lender";
   isKYCVerified: boolean;
+  isEmailVerified: boolean; 
+  emailVerification?: {     
+    otp: string;
+    expiresAt: Date;
+  };
   loanToIncomeRatio?: number;
   isDeleted?: boolean;
 }
@@ -29,7 +36,10 @@ export interface IUserResponse {
   registrationDate: Date;
   baseCreditScore?: number;
   walletAddress: string;
+  usdcBalance?: number;
+  ethBalance?: number;
   gbeseTokenBalance?: number;
   role: "user" | "admin" | "lender";
   isKYCVerified: boolean;
+  isEmailVerified: boolean; 
 }
