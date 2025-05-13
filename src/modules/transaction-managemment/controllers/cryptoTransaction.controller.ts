@@ -66,7 +66,7 @@ export class CryptoTransactionController {
   ): Promise<void> => {
     try {
       const { fromUserName, toAddress, amount, currency } = req.body;
-      const { userId } = req;
+      const userId = req.user?.userId!;
 
       if (!fromUserName || !toAddress || !amount) {
         res.status(400).json({ message: "Missing required fields" });
@@ -115,7 +115,7 @@ export class CryptoTransactionController {
 
   // GET
   static async getUSDCBalance(req: AuthRequest, res: Response): Promise<void> {
-    const { userId } = req;
+    const userId = req.user?.userId!;
     try {
       if (!isValidObjectId(userId)) {
         res.status(400).json({ message: "Valid userId is required" });
@@ -144,7 +144,7 @@ export class CryptoTransactionController {
     res: Response
   ): Promise<void> => {
     try {
-      const { userId } = req;
+      const userId = req.user?.userId!;
 
       if (!isValidObjectId(userId)) {
         res.status(400).json({ message: "Valid userId is required" });
@@ -173,7 +173,7 @@ export class CryptoTransactionController {
     res: Response
   ): Promise<void> => {
     try {
-      const { userId } = req;
+      const userId = req.user?.userId!;
       const { userName } = req.params
 
       if (!isValidObjectId(userId)) {
@@ -205,7 +205,7 @@ export class CryptoTransactionController {
   ): Promise<void> => {
     try {
       const { currency } = req.params;
-      const { userId } = req;
+      const userId = req.user?.userId!;
 
       if (!isValidObjectId(userId)) {
         res.status(400).json({ message: "Valid userId is required" });
