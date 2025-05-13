@@ -6,18 +6,18 @@ import { UserModel } from "../../user-management/Models";
 export class TransactionService {
 	static async deposit(userId: string, amount: number) {
 		const wallet = await WalletService.updateFiatBalance(userId, amount);
-
+	  
 		const transaction = new TransactionModel({
-			userId,
-			transactionType: "deposit",
-			amount,
-			fiatChange: amount,
-			status: "completed",
-			timestamp: new Date(),
+		  userId,
+		  transactionType: "deposit",
+		  amount,
+		  fiatChange: amount,
+		  status: "completed",
+		  timestamp: new Date(),
 		});
-
+	  
 		return transaction.save();
-	}
+	  }
 
 	static async withdraw(userId: string, amount: number) {
 		const wallet = await WalletService.getWalletByUserId(userId);
@@ -101,4 +101,13 @@ export class TransactionService {
 	static async getTransactionHistory(userId: string) {
 		return TransactionModel.find({ userId }).sort({ timestamp: -1 });
 	}
+	
+	static async getTransactionById(transactionId: string) {
+		const tx = await TransactionModel.findById(transactionId);
+		if (!tx) {
+			throw new ApiError("Transaction not found", 404);
+		}
+		return tx;
+	}
+	
 }

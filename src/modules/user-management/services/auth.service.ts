@@ -1,5 +1,4 @@
 import bcrypt from "bcryptjs";
-import jwt from "jsonwebtoken";
 import { UserModel, IUserDocument } from "../Models";
 import { IUserResponse } from "../../../common/interfaces/user";
 import { WalletService } from "../../wallet-management/services/wallet.service";
@@ -10,59 +9,76 @@ import {
 } from "../../../utils/auth.utils";
 import { CryptoTransactionService } from "../../transaction-managemment/services/cryptoTransaction.service";
 import CreditScoreRepository from "../../reputation-credit-scoring/data-access/credit-score.repository";
-import { Types } from "mongoose";
+import { generateOTP, otpExpiresIn } from '../../../utils/otp.utils';
+import { sendVerificationEmail } from '../../../utils/emial.utils';
+import PendingUserModel from '../Models/pendingUser.model';
 
 export class AuthService {
-  // Register a new user
-  static async register(userData: {
+
+  static async initiateRegistration(userData: {
     username: string;
     password: string;
     email: string;
     phoneNumber?: string;
-  }): Promise<{
-    accessToken: string;
-    refreshToken: string;
-    user: IUserResponse;
-  }> {
+  }) {
     const { username, password, email, phoneNumber } = userData;
-
-    const existing = await UserModel.findOne({
-      $or: [{ username }, { email }],
-    });
-
-    if (existing) throw new Error("Username or email already exists");
-
-    const hashedPassword = await bcrypt.hash(password, 10);
-
-    const newUser = new UserModel({
+  
+    const existing = await UserModel.findOne({ $or: [{ username }, { email }] });
+    const pending = await PendingUserModel.findOne({ email });
+  
+    if (existing || pending) throw new ApiError('Email or username already exists', 409);
+  
+    const otp = generateOTP();
+    const expiresAt = otpExpiresIn();
+    const passwordHash = await bcrypt.hash(password, 10);
+  
+    await PendingUserModel.create({
       username,
-      passwordHash: hashedPassword,
       email,
       phoneNumber,
+      passwordHash,
+      otp,
+      expiresAt
+    });
+  
+    await sendVerificationEmail(email, otp);
+  }
+  
+  static async verifyEmailAndCreateUser(email: string, otp: string) {
+    const pending = await PendingUserModel.findOne({ email });
+    if (!pending) throw new ApiError('No pending registration found', 404);
+  
+    if (pending.otp !== otp || pending.expiresAt < new Date()) {
+      throw new ApiError('Invalid or expired OTP', 400);
+    }
+  
+    const newUser = new UserModel({
+      username: pending.username,
+      passwordHash: pending.passwordHash,
+      email: pending.email,
+      phoneNumber: pending.phoneNumber,
       registrationDate: new Date(),
       isKYCVerified: false,
-      role: "user",
+      isEmailVerified: true,
+      role: 'user'
     });
-
-    const userWalletAddress =
-      await CryptoTransactionService.generateWalletForUser(
-        newUser._id.toString()
-      );
-    newUser.walletAddress = userWalletAddress.address; // Set the wallet address for the user
-
-    const savedUser = (await newUser.save()) as IUserDocument;
-
-    await WalletService.createWallet(savedUser._id); //create a wallet for the user
-
+  
+    const walletAddress = await CryptoTransactionService.generateWalletForUser(newUser._id.toString());
+    newUser.walletAddress = walletAddress.address;
+  
+    const savedUser = await newUser.save();
+    await WalletService.createWallet(savedUser._id);
     await CreditScoreRepository.createCreditScore({
-      userId: savedUser.userId as unknown as Types.ObjectId,
+      userId: savedUser._id,
       score: savedUser.baseCreditScore,
-      history: [],
+      history: []
     });
-
+  
+    await PendingUserModel.deleteOne({ email });
+  
     const accessToken = generateAccessToken(savedUser._id.toString());
     const refreshToken = generateRefreshToken(savedUser._id.toString());
-
+  
     const userResponse: IUserResponse = {
       userId: savedUser._id.toString(),
       username: savedUser.username,
@@ -76,12 +92,12 @@ export class AuthService {
       gbeseTokenBalance: savedUser.gbeseTokenBalance,
       role: savedUser.role,
       isKYCVerified: savedUser.isKYCVerified,
+      isEmailVerified: savedUser.isEmailVerified
     };
-
+  
     return { accessToken, refreshToken, user: userResponse };
   }
-
-  // Login a user
+  
   static async login(loginData: {
     username: string;
     password: string;
@@ -114,8 +130,45 @@ export class AuthService {
       gbeseTokenBalance: user.gbeseTokenBalance,
       role: user.role,
       isKYCVerified: user.isKYCVerified,
+      isEmailVerified: user.isEmailVerified 
     };
-
     return { accessToken, refreshToken, user: userResponse };
   }
+
+  static async getUserById(userId: string) {
+    const user = await UserModel.findById(userId);
+  
+    if (!user) throw new ApiError('User not found', 404);
+  
+    return {
+      userId: user._id.toString(),
+      username: user.username,
+      email: user.email,
+      phoneNumber: user.phoneNumber,
+      registrationDate: user.registrationDate,
+      baseCreditScore: user.baseCreditScore,
+      walletAddress: user.walletAddress,
+      usdcBalance: user.usdcBalance,
+      ethBalance: user.ethBalance,
+      gbeseTokenBalance: user.gbeseTokenBalance,
+      role: user.role,
+      isKYCVerified: user.isKYCVerified,
+      isEmailVerified: user.isEmailVerified,
+    };
+  }
+  
+  static async getPublicUserById(userId: string) {
+  const user = await UserModel.findById(userId);
+
+  if (!user) throw new ApiError('User not found', 404);
+
+  return {
+    userId: user._id.toString(),
+    username: user.username,
+    email: user.email,
+    phoneNumber: user.phoneNumber,
+    baseCreditScore: user.baseCreditScore,
+  };
+}
+
 }
