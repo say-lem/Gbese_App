@@ -86,4 +86,46 @@ export class TransactionController {
 			res.status(400).json({ error: error.message });
 		}
 	}
+	static async transfer(req: AuthRequest, res: Response, next: NextFunction) {
+		try {
+			const senderId = req.user?.userId!;
+			const { recipientId, amount } = req.body;
+	
+			if (!recipientId || !amount || amount <= 0) {
+				throw new ApiError("Invalid transfer request: recipient and amount are required", 400);
+			}
+	
+			const result = await TransactionService.transfer(senderId, recipientId, amount, "transfer");
+	
+			res.status(200).json({
+				success: true,
+				message: "Transfer successful",
+				data: result,
+			});
+		} catch (error) {
+			if (error instanceof ApiError) {
+				return next(new ApiError(error.message, error.statusCode));
+			}
+			return next(new ApiError("Internal Server Error", 500));
+		}
+	}
+	
+	static async getTransactionById(req: AuthRequest, res: Response, next: NextFunction) {
+		try {
+			const { transactionId } = req.params;
+			const transaction = await TransactionService.getTransactionById(transactionId);
+	
+			if (transaction.userId.toString() !== req.user?.userId) {
+				throw new ApiError("Unauthorized access to transaction", 403);
+			}
+	
+			res.status(200).json(transaction);
+		} catch (error) {
+			if (error instanceof ApiError) {
+				return next(new ApiError(error.message, error.statusCode));
+			}
+			return next(new ApiError("Internal Server Error", 500));
+		}
+	}
+	
 }
