@@ -358,15 +358,18 @@ export class CryptoTransactionService {
         },
         { new: true }
       );
-    }
+    }    
 
     // Also update the wallet's tokenUSDBalance
     // check this for eth and gbese
-    await WalletModel.findOneAndUpdate(
-      { username: userName },
-      { $inc: { tokenUSDBalance: numAmount * multiplier } },
-      { new: true }
-    );
+    if (currency === "USDC") {
+     const wallet = await WalletModel.findOneAndUpdate(
+        { username: userName },
+        { $inc: { tokenUSDBalance: numAmount * multiplier } },
+        { new: true }
+      );
+      console.log("wallet:", wallet?.tokenUSDBalance);
+    }
   };
 
   //  Gets a user's token balances
@@ -417,80 +420,97 @@ export class CryptoTransactionService {
 
   // Listens for USDC transactions and updates user balances accordingly
   static startTransactionListener = async (): Promise<void> => {
-    console.log("Starting USDC transaction listener...");
-
-    const decimals = await usdcContract.decimals();
-
-    // Fetch all registered user wallets
+    console.log("Starting transaction listener for USDC and GBESE...");
+  
+    const usdcDecimals = await usdcContract.decimals();
+    const gbeseDecimals = await gbeseContract.decimals();
+  
     const users = await UserModel.find(
       { walletAddress: { $exists: true, $ne: null } },
-      { _id: 1, walletAddress: 1 }
+      { _id: 1, walletAddress: 1, username: 1 }
     );
-
-    const userAddresses = new Set(
-      users.map((user: { walletAddress: string }) =>
-        user.walletAddress.toLowerCase()
-      )
+  
+    const userAddresses = new Set(users.map((u) => u.walletAddress.toLowerCase()));
+    const addressToUserId = Object.fromEntries(
+      users.map((u) => [u.walletAddress.toLowerCase(), u._id.toString()])
     );
-
-    const addressToUserId: Record<string, string> = {};
-    users.forEach((user: { walletAddress: string; _id: any }) => {
-      addressToUserId[user.walletAddress.toLowerCase()] = user._id.toString();
-    });
-
+    const addressToUserName = Object.fromEntries(
+      users.map((u) => [u.walletAddress.toLowerCase(), u.username])
+    );    
+  
     provider.on("block", async (blockNumber: number) => {
       try {
-        const logs = await provider.getLogs({
-          fromBlock: blockNumber,
-          toBlock: blockNumber,
-          address: USDC_CONTRACT_ADDRESS,
-          topics: [
-            ethers.id("Transfer(address,address,uint256)"),
-            null, // any from
-            null, // any to
-          ],
-        });
+        // 👇 Prepare filters for both contracts
+        const filters = [
+          {
+            name: "USDC",
+            address: USDC_CONTRACT_ADDRESS,
+            contract: usdcContract,
+            decimals: usdcDecimals,
+            currency: "USDC",
+          },
+          {
+            name: "GBESE",
+            address: GBESE_CONTRACT_ADDRESS,
+            contract: gbeseContract,
+            decimals: gbeseDecimals,
+            currency: "GBESE",
+          },
+        ];
+  
+        for (const { name, address, contract, decimals, currency } of filters) {
+          const logs = await provider.getLogs({
+            fromBlock: blockNumber,
+            toBlock: blockNumber,
+            address,
+            topics: [ethers.id("Transfer(address,address,uint256)")],
+          });
+  
+          for (const log of logs) {
+            const parsed = contract.interface.parseLog(log);
+            const from = parsed!.args.from.toLowerCase();
+            const to = parsed!.args.to.toLowerCase();
+            const value = parsed!.args.value;
+  
+            if (userAddresses.has(to)) {
+              const userId = addressToUserId[to];
+              const userName = addressToUserName[to];
+              console.log("userName:", userName);
+              
 
-        for (const log of logs) {
-          const parsed = usdcContract.interface.parseLog(log);
-          const from = parsed!.args.from.toLowerCase();
-          const to = parsed!.args.to.toLowerCase();
-          const value = parsed!.args.value;
-
-          if (userAddresses.has(to)) {
-            const userId = addressToUserId[to];
-            const amount = ethers.formatUnits(value, decimals);
-            const isInternal = userAddresses.has(from);
-
-            if (!isInternal) {
-              const txHash = log.transactionHash;
-
-              console.log(
-                `Received ${amount} USDC for user ${userId} in tx ${txHash}`
-              );
-
-              const transaction = new cryptoTransactionModel({
-                toUserId: userId,
-                fromAddress: from,
-                toAddress: to,
-                amount: parseFloat(amount),
-                txHash,
-                status: "CONFIRMED",
-                currency: "USDC",
-                Direction: "EXTERNAL",
-                TransactionType: "DEPOSIT",
-              });
-              await transaction.save();
-
-              await this.updateUserBalance(userId, amount, "USDC", "add");
+              const amount = ethers.formatUnits(value, decimals);
+              const isInternal = userAddresses.has(from);
+  
+              if (!isInternal) {
+                const txHash = log.transactionHash;
+  
+                console.log(`Received ${amount} ${currency} for user ${userId} in tx ${txHash}`);
+  
+                const transaction = new cryptoTransactionModel({
+                  toUserId: userId,
+                  fromAddress: from,
+                  toAddress: to,
+                  toUserName: userName,
+                  amount: parseFloat(amount),
+                  txHash,
+                  status: "CONFIRMED",
+                  currency,
+                  Direction: "EXTERNAL",
+                  TransactionType: "DEPOSIT",
+                });
+                await transaction.save();
+  
+                await this.updateUserBalance(userName, amount, currency, "add");
+              }
             }
           }
         }
       } catch (error) {
-        console.error("Error processing USDC transfer logs:", error);
+        console.error("Error processing token transfer logs:", error);
       }
     });
-
-    console.log("USDC transaction listener started");
+  
+    console.log("Transaction listener for USDC and GBESE started");
   };
+  
 }
