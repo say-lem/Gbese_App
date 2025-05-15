@@ -29,7 +29,7 @@ export class CryptoTransactionController {
         return;
       }
 
-      if (isNaN(parseFloat(amount)) || parseFloat(amount) <= 0) {
+      if (isNaN(parseFloat(amount))) {
         res.status(400).json({ message: "Amount must be a positive number" });
         return;
       }
