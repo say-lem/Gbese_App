@@ -11,7 +11,7 @@ const loanRouter = Router();
 // Loan Request routes
 loanRequestRouter.post("/", authenticate, CreditLendingController.createNewLoanRequest);
 loanRequestRouter.post("/approve", CreditLendingController.approveLoanRequest);
-loanRequestRouter.post("/reject", CreditLendingController.rejectLoanRequest)
+loanRequestRouter.post("/reject", CreditLendingController.rejectLoanRequest);
 loanRequestRouter.get("/:loanRequestId", authenticate, CreditLendingController.getLoanRequest);
 loanRequestRouter.get("/user/:userId", authenticate, CreditLendingController.getUserLoanRequests);
 
