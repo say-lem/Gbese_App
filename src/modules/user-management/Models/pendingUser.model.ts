@@ -6,8 +6,12 @@ const pendingUserSchema = new Schema({
   email: { type: String, required: true, unique: true },
   phoneNumber: String,
   otp: { type: String, required: true },
-  expiresAt: { type: Date, required: true }
-});
+  expiresAt: { type: Date, required: true },
+  role: { type: String, enum: ['user', 'admin', 'lender'], default: 'user' }
+}, { timestamps: true });
+
+
+pendingUserSchema.index({ expiresAt: 1 }, { expireAfterSeconds: 0 });
 
 const PendingUserModel = mongoose.model('PendingUser', pendingUserSchema);
 export default PendingUserModel;
