@@ -10,9 +10,9 @@ import {
 } from "../../../utils/auth.utils";
 import { CryptoTransactionService } from "../../transaction-managemment/services/cryptoTransaction.service";
 import CreditScoreRepository from "../../reputation-credit-scoring/data-access/credit-score.repository";
-import { generateOTP, otpExpiresIn } from "../../../utils/otp.utils";
-import { sendVerificationEmail } from "../../../utils/emial.utils";
-import PendingUserModel from "../Models/pendingUser.model";
+import { generateOTP, otpExpiresIn } from '../../../utils/otp.utils';
+import { sendVerificationEmail } from '../../../utils/email.utils';
+import PendingUserModel from '../Models/pendingUser.model';
 
 export class AuthService {
   static async initiateRegistration(userData: {

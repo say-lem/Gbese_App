@@ -1,13 +1,7 @@
-import nodemailer from 'nodemailer';
+import EmailTransporter from '../modules/notification-service/config/email-transporter.config';
 
 export const sendVerificationEmail = async (to: string, otp: string) => {
-  const transporter = nodemailer.createTransport({
-    service: 'gmail', 
-    auth: {
-      user: process.env.EMAIL_USER!,
-      pass: process.env.EMAIL_PASS!
-    }
-  });
+  const transporter = EmailTransporter();
 
   await transporter.sendMail({
     from: `"Gbese App" <${process.env.EMAIL_USER}>`,

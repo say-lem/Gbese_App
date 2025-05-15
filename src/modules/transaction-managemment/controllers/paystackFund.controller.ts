@@ -4,6 +4,7 @@ import { UserModel } from '../../user-management/Models/user.model';
 import { AuthRequest } from "../../../middleware/auth.middleware";
 import ApiError from '../../../utils/ApiError';
 import { TransactionService } from '../services/transaction.service';
+import { FRONTEND_URL } from '../../../config/constants';
 
 export class FundController {
     static async initiateFunding(req: AuthRequest, res: Response, next: NextFunction) {
@@ -19,7 +20,7 @@ export class FundController {
           }
           const email = req.user.email;
           
-        const callback_url = `${process.env.FRONTEND_URL}/payment/callback`; 
+        const callback_url = `${FRONTEND_URL}/payment/callback`; 
   
         const paystackRes = await PaystackService.initializeTransaction({
           email,
@@ -58,7 +59,7 @@ export class FundController {
           const user = await UserModel.findById(userId);
           if (!user) return next(new ApiError('User not found', 404));
       
-          user.fiatBalance = (user.fiatBalance || 0) + amountFundedInNaira;
+          user.fiatBalance = (user.fiatBalance!) + amountFundedInNaira;
           await user.save();
       
           await TransactionService.deposit(userId, amountFundedInNaira);
