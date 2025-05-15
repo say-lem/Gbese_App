@@ -222,23 +222,6 @@ export default class CreditLendingController {
 		}
 	}
 
-	static async approveLoanRequest(
-		req: AuthRequest,
-		res: Response,
-		next: NextFunction
-	) {
-		const userId = req.userId;
-		const { loanRequestId } = req.body;
-		const approvedLoanRequest = await LenderService.approveLoanRequest(
-			userId!,
-			loanRequestId
-		);
-		if (!approvedLoanRequest) {
-			return next(new ApiError("Failed to approve loan request", 404));
-		}
-		res.status(200).json(approvedLoanRequest);
-	}
-
 	static async getLoanOfferById(
 		req: AuthRequest,
 		res: Response,
@@ -282,7 +265,7 @@ export default class CreditLendingController {
 		}
 	}
 
-	static async createLoan(req: AuthRequest, res: Response, next: NextFunction) {
+	static async approveLoanRequest(req: AuthRequest, res: Response, next: NextFunction) {
 		const session = await mongoose.startSession();
 
 		try {
@@ -303,31 +286,33 @@ export default class CreditLendingController {
 				if (!loanRequestId) {
 					return next(new ApiError("Loan request ID is required", 400));
 				}
-				const loanRequest = await LoanRepository.getLoanRequestById(
+				const approvedLoanRequest = await LenderService.approveLoanRequest(
+					userId!,
 					loanRequestId,
 					session
 				);
-				if (!loanRequest) {
-					return next(new ApiError("Loan request not found", 404));
+				if (!approvedLoanRequest) {
+					return next(new ApiError("Failed to approve loan request", 404));
 				}
-				if (loanRequest.status !== "approved") {
+
+				if (approvedLoanRequest.status !== "approved") {
 					return next(new ApiError("Loan request is not approved", 400));
 				}
-				if (loanRequest.isDeleted) {
+				if (approvedLoanRequest.isDeleted) {
 					return next(new ApiError("Loan request has been deleted", 400));
 				}
 
-				const borrowerId = loanRequest.userId.toString();
+				const borrowerId = approvedLoanRequest.userId.toString();
 
 				const data = await LoanService.createBorrowerLoan(
 					lenderId,
-					loanRequest,
+					approvedLoanRequest,
 					session
 				);
 				const transactionData = await LoanService.disburseLoan(
 					lenderId,
 					borrowerId,
-					loanRequest.amount!
+					approvedLoanRequest.amount
 				);
 
 				await session.commitTransaction();
@@ -360,6 +345,39 @@ export default class CreditLendingController {
 		}
 	}
 
+	static async rejectLoanRequest(req: AuthRequest, res: Response, next: NextFunction){
+
+		const session = await mongoose.startSession();
+		try {
+
+			const userId = req.user?.userId!
+			const {loanRequestId} = req.body;
+
+			const loanTransaction = await session.withTransaction(async () => {
+
+				const rejectedLoanRequest = await LenderService.rejectLoanRequest(
+					userId,
+					loanRequestId,
+					session
+				);
+
+				if (!rejectedLoanRequest) {
+					throw new ApiError("Unable to reject Loan request. Try Again", 400);
+				}
+				await session.commitTransaction()
+				return rejectedLoanRequest;
+			});
+
+			res.status(200).send({success:true, message: "Loan request Rejected Successfully", data: loanTransaction});
+			await NotificationService.notifyUserLoanRequest(loanTransaction.userId.toString(), "Your Loan Request has been rejected. Please check!");
+
+		} catch (error) {
+			
+		} finally{
+			await session.endSession();
+		}
+	}
+
 	static async getLoanById(
 		req: AuthRequest,
 		res: Response,
@@ -380,7 +398,7 @@ export default class CreditLendingController {
 		}
 	}
 
-	static async getLenderLoans(
+	static async getUserLoans(
 		req: AuthRequest,
 		res: Response,
 		next: NextFunction

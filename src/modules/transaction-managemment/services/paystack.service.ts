@@ -1,13 +1,5 @@
-import axios from 'axios';
-import dotenv from 'dotenv';
-
-dotenv.config();
-
-const PAYSTACK_SECRET_KEY = process.env.PAYSTACK_SECRET_KEY;
-
-if (!PAYSTACK_SECRET_KEY) {
-  throw new Error('Paystack secret key is not defined in .env');
-}
+import axios from 'axios'; 
+import { PAYSTACK_SECRET_KEY } from '../../../config/constants';
 
 const paystack = axios.create({
   baseURL: 'https://api.paystack.co',

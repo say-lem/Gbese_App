@@ -10,6 +10,8 @@ const loanRouter = Router();
 
 // Loan Request routes
 loanRequestRouter.post("/", authenticate, CreditLendingController.createNewLoanRequest);
+loanRequestRouter.post("/approve", CreditLendingController.approveLoanRequest);
+loanRequestRouter.post("/reject", CreditLendingController.rejectLoanRequest)
 loanRequestRouter.get("/:loanRequestId", authenticate, CreditLendingController.getLoanRequest);
 loanRequestRouter.get("/user/:userId", authenticate, CreditLendingController.getUserLoanRequests);
 
@@ -19,9 +21,9 @@ loanOfferRouter.get("/:loanOfferId", authenticate, CreditLendingController.getLo
 loanOfferRouter.get("/loan-request/:loanRequestId", authenticate, CreditLendingController.getLoanOfferByRequestId);
 
 // Loan routes
-loanRouter.post("/", authenticate, CreditLendingController.createLoan);
+loanRouter.post("/", authenticate, CreditLendingController.getUserLoans);
 loanRouter.get("/:loanId", authenticate, CreditLendingController.getLoanById);
-loanRouter.get("/lender/:lenderId", authenticate, CreditLendingController.getLenderLoans);
+loanRouter.get("/lender", authenticate, CreditLendingController.getUserLoans);
 
 
 

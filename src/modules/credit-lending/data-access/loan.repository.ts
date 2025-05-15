@@ -73,7 +73,7 @@ export default class LoanRepository {
 		).exec();
 	}
 
-	static async updateLoanOfferLoanRequestId(loanOfferId: string, loanRequestId: string, session?: ClientSession){
+	static async updateLoanOfferLoanRequestId(loanOfferId: string, loanRequestId: string|null, session?: ClientSession){
 		return LoanOfferModel.findByIdAndUpdate(
 			loanOfferId,
 			{ $set: { loanRequestId } },

@@ -1,5 +1,5 @@
 import { MailOptions } from "../../../common/interfaces/EmailOptions";
-import { GMAIL_APP_EMAIL } from "../../../config/constants";
+import {EMAIL_USER } from "../../../config/constants";
 import { loanRequestWS, transactionWS } from "../../../server";
 import EmailTransporter from "../config/email-transporter.config";
 
@@ -25,7 +25,7 @@ export default class NotificationService {
 		const transporter = EmailTransporter();
 		try {
 			await transporter.sendMail({
-				from: `GBESE APP<${GMAIL_APP_EMAIL}>`,
+				from: `GBESE APP<${EMAIL_USER}>`,
 				to: mailTo,
 				subject: mailOptions.subject,
 				text: mailOptions.text,

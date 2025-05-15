@@ -39,14 +39,17 @@ export const USDC_CONTRACT_ADDRESS = getEnvironmentVariable("USDC_CONTRACT_ADDRE
 export const GBESE_CONTRACT_ADDRESS = getEnvironmentVariable("GBESE_CONTRACT_ADDRESS");
 export const BASE_TESTNET_RPC_URL = getEnvironmentVariable( "BASE_TESTNET_RPC_URL");
 export const DEFAULT_GAS_FUNDER_PRIVATE_KEY = getEnvironmentVariable("DEFAULT_GAS_FUNDER_PRIVATE_KEY");
+export const PAYSTACK_SECRET_KEY = getEnvironmentVariable("PAYSTACK_SECRET_KEY");
+
+export const FRONTEND_URL = getEnvironmentVariable("FRONTEND_URL");
 
 // Redis variables for notifications
 export const REDIS_USERNAME = getEnvironmentVariable("REDIS_USERNAME");
 export const REDIS_PASSWORD = getEnvironmentVariable("REDIS_PASSWORD");
 export const REDIS_HOST = getEnvironmentVariable("REDIS_HOST");
 export const REDIS_PORT = getEnvironmentVariableNumber("REDIS_PORT");
-export const GMAIL_APP_EMAIL = getEnvironmentVariable("GMAIL_APP_EMAIL");
-export const GMAIL_APP_PASSWORD = getEnvironmentVariable("GMAIL_APP_PASSWORD");
+export const EMAIL_USER = getEnvironmentVariable("EMAIL_USER");
+export const EMAIL_PASS = getEnvironmentVariable("EMAIL_PASS");
 
 // Loan constants
 export const MAX_LOAN_LIMIT = 1000000 // 1 million
