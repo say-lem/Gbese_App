@@ -6,42 +6,23 @@ export default class LenderService {
 
 	static async createLenderLoanOffer(
 		userId: string,
-		loanRequestId: string | Types.ObjectId,
+		minLoanAmount: number,
+		maxLoanAmount: number,
 		terms: number,
 		interestRate: number
 	) {
 		if (!userId) {
 			throw new ApiError("User is not authorized to create a loan offer", 400);
 		}
-		const loanRequest = await LoanRepository.getLoanRequestById(
-			loanRequestId.toString()
-		);
-		if (!loanRequest) {
-			throw new ApiError("Loan request not found", 404);
-		}
-		if (loanRequest.status !== "pending") {
-			throw new ApiError("Loan request has been processed already", 400);
-		}
-
-		if (loanRequest.isDeleted) {
-			throw new ApiError("Loan request has been deleted", 400);
-		}
-
-		// check if loan offer already exists for this request
-		const loanOffer = await LoanRepository.getLoanOfferByLoanRequestId(
-			loanRequestId.toString()
-		);
-
-		if (loanOffer) {
-			throw new ApiError("Loan offer already exists for this request", 400);
-		}
 
 		// Create a new loan offer
 		const newLoanOffer = await LoanRepository.createLoanOffer(userId, {
-			loanRequestId: loanRequestId as Types.ObjectId,
+			lenderId: userId as unknown as Types.ObjectId,
+			minLoanAmount,
+			maxLoanAmount,
 			terms,
 			interestRate,
-			status: "pending",
+			status: "open",
 		});
 
 		return newLoanOffer;
@@ -51,6 +32,8 @@ export default class LenderService {
 		userId: string,
 		loanRequestId: string | Types.ObjectId
 	) {
+
+		//TODO: modify Flow to check if loan lender has sufficient amount to loan
 		if (!userId) {
 			throw new ApiError("User is not authorized to this loan request", 400);
 		}
@@ -96,5 +79,12 @@ export default class LenderService {
 		}
 
         return updatedLoanRequest;
+	}
+
+	static async rejectLoanRequest(
+		userId: string,
+		loanRequestId: string | Types.ObjectId
+	){
+		//TODO: implement rejection of loan request
 	}
 }

@@ -7,8 +7,8 @@ import { ClientSession } from "mongoose";
 
 export default class LoanRepository {
 	// Loan Request Methods
-	static async createLoanRequest(userId: string, data: Partial<ILoanRequest>) {
-		return await LoanRequestModel.create({
+	static async createLoanRequest(userId: string, data: Partial<ILoanRequest>, session?: ClientSession) {
+		const loanRequest = new LoanRequestModel({
 			userId,
 			amount: data.amount,
 			interestRate: data.interestRate,
@@ -16,6 +16,8 @@ export default class LoanRepository {
 			applicationDate: Date.now(),
 			status: "pending",
 		});
+
+		return loanRequest.save({session});
 	}
 
 	static async getLoanRequestById(loanRequestId: string, session?: ClientSession) {
@@ -33,24 +35,27 @@ export default class LoanRepository {
 		});
 	}
 
-	static async updateLoanRequestStatus(loanRequestId: string, status: string) {
+	static async updateLoanRequestStatus(loanRequestId: string, status: string, session?: ClientSession) {
 		return LoanRequestModel.findByIdAndUpdate(
 			loanRequestId,
 			{ $set: { status } },
 			{ new: true }
-		).exec();
+		).session(session ?? null).exec();
 	}
 
 	// Loan Offer Methods
-	static async createLoanOffer(userId: string, data: Partial<ILoanOffer>) {
-		return await LoanOfferModel.create({
-			loanRequestId: data.loanRequestId,
+	static async createLoanOffer(userId: string, data: Partial<ILoanOffer>, session?: ClientSession) {
+		const loanOffer = new LoanOfferModel({
 			lenderId: userId,
+			minLoanAmount: data.minLoanAmount,
+			maxLoanAmount: data.maxLoanAmount,
 			terms: data.terms,
 			interestRate: data.interestRate,
 			offerDate: Date.now(),
-			status: data.status,
+			status: "open",
 		});
+
+		return loanOffer.save({session});
 	}
 
 	static async getLoanOfferById(loanOfferId: string) {
@@ -60,11 +65,19 @@ export default class LoanRepository {
 	static async getLoanOfferByLoanRequestId(loanRequestId: string) {
 		return LoanOfferModel.findOne({ loanRequestId }).exec();
 	}
-	static async updateLoanOfferStatus(loanOfferId: string, status: string) {
+	static async updateLoanOfferStatus(loanOfferId: string, status: string, session?: ClientSession) {
 		return LoanOfferModel.findByIdAndUpdate(
 			loanOfferId,
 			{ $set: { status } },
-			{ new: true }
+			{ new: true, session }
+		).exec();
+	}
+
+	static async updateLoanOfferLoanRequestId(loanOfferId: string, loanRequestId: string, session?: ClientSession){
+		return LoanOfferModel.findByIdAndUpdate(
+			loanOfferId,
+			{ $set: { loanRequestId } },
+			{ new: true, session }
 		).exec();
 	}
 

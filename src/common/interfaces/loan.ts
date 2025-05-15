@@ -22,5 +22,6 @@ export interface ILoan {
   export interface IRepaymentSchedule {
     dueDate: Date;
     amountDue: number;
+    status?: "Paid"| "Not Paid"|"Overdue";
   }
   

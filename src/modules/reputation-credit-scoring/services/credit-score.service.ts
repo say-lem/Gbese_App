@@ -5,8 +5,8 @@ import { INITIAL_LOAN_LIMIT, LOAN_INTEREST, NEW_USER_CREDIT_SCORE } from "../../
 
 export default class CreditScoreService {
     
-    static async checkLoanLimit(userId: string ) {
-        const creditScore = await CreditScoreRepository.getCreditScore(userId);
+    static async checkLoanLimit(userId: string, session?: ClientSession ) {
+        const creditScore = await CreditScoreRepository.getCreditScore(userId, session);
         if (!creditScore) {
             throw new ApiError('Unable to get Loan Limit', 404);
         }

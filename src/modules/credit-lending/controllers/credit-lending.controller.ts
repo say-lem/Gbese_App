@@ -1,3 +1,4 @@
+import { WalletService } from "./../../wallet-management/services/wallet.service";
 import { Response, NextFunction } from "express";
 import { AuthRequest } from "../../../middleware/auth.middleware";
 import LoanRepository from "../data-access/loan.repository";
@@ -15,38 +16,100 @@ export default class CreditLendingController {
 		res: Response,
 		next: NextFunction
 	) {
+		const session = await mongoose.startSession();
+
 		try {
 			const userId = req.user?.userId!;
-			const { amount, term, interestRate } = req.body;
-			const eligableLoan = await CreditScoreService.checkLoanLimit(userId!);
-			if (eligableLoan < amount) {
-				throw new ApiError(
-					`Your Eligible loan limit is ${eligableLoan.toLocaleString()}`,
-					400
-				);
-			}
+			const { amount, term, loanOfferId, purpose } = req.body;
 
-			if (interestRate !== LOAN_INTEREST) {
-				throw new ApiError("Interest Rate is not Valid", 400);
-			}
-			const loanRequest = await LoanRepository.createLoanRequest(userId!, {
-				amount,
-				term,
-				interestRate,
+			const loanRequestTransaction = await session.withTransaction(async () => {
+				// check credit score for maximum loan amount
+				const eligableLoan = await CreditScoreService.checkLoanLimit(
+					userId!,
+					session
+				);
+				if (eligableLoan < amount) {
+					throw new ApiError(
+						`Your Eligible loan limit is ${eligableLoan.toLocaleString()}`,
+						400
+					);
+				}
+
+				// get the loan
+				const loanOffer = await LoanRepository.getLoanOfferById(loanOfferId);
+
+				if (!loanOffer) {
+					throw new ApiError("Unable to Fetch Loan Offer", 404);
+				}
+
+				if (loanOffer.status == "suspended") {
+					throw new ApiError(
+						"Loan offer has been suspended. Please Try another loan Offer",
+						400
+					);
+				}
+
+				if (amount < loanOffer.minLoanAmount || amount > loanOffer.maxLoanAmount){
+					throw new ApiError("Invalid loan Amount. loan amount is below or above loan range", 400);
+				}
+
+				//check if the lender has sufficient balance to disburse loan
+				const checkedLenderWallet = await WalletService.getWalletByUserId(
+					loanOffer.lenderId.toString()
+				);
+				if (checkedLenderWallet.fiatBalance < amount) {
+					await LoanRepository.updateLoanOfferStatus(loanOfferId, "suspended", session);
+					// TODO: Notify lender that his loan is suspended due to insuffient funds
+					throw new ApiError(
+						"Loan offer has been suspended. Please Try another loan Offer",
+						404
+					);
+				}
+
+				// creates the loan request
+				const loanRequest = await LoanRepository.createLoanRequest(userId!, {
+					amount,
+					term,
+					purpose,
+					interestRate: loanOffer.interestRate,
+				}, session);
+				if (!loanRequest) {
+					return next(new ApiError("Failed to create loan request", 400));
+				}
+
+				// updates the loan Offer 
+				const updatedLoanOffer =
+					await LoanRepository.updateLoanOfferLoanRequestId(
+						loanOffer.loanOfferId.toString(),
+						loanRequest.loanRequestId.toString(), 
+						session
+					);
+				if (!updatedLoanOffer) {
+					return next(new ApiError("Unable to create loan request", 400));
+				}
+				await session.commitTransaction();
+				return loanRequest;
 			});
-			if (!loanRequest) {
-				return next(new ApiError("Failed to create loan request", 400));
-			}
-			res.status(201).json(loanRequest);
+
+			res.status(201).send({
+				success: true,
+				message: "Loan Request created successfully",
+				data: loanRequestTransaction,
+			});
 			await NotificationService.notifyUserLoanRequest(userId!, {
 				success: true,
 				message: "Loan Request created successfully",
 			});
 		} catch (error) {
+			if (session.inTransaction()) {
+				await session.abortTransaction();
+			}
 			if (error instanceof ApiError) {
 				return next(new ApiError(error.message, error.statusCode));
 			}
 			return next(new ApiError("Internal Server Error", 500));
+		} finally {
+			session.endSession();
 		}
 	}
 
@@ -108,34 +171,72 @@ export default class CreditLendingController {
 	) {
 		try {
 			const userId = req.user?.userId!;
-			const { loanRequestId, terms, interestRate } = req.body;
+			const { minLoanAmount, maxLoanAmount, terms, interestRate } = req.body;
 
-			if (interestRate !== LOAN_INTEREST) {
-				return next(new ApiError("Invalid Interest Rate", 400));
+			if (interestRate > LOAN_INTEREST) {
+				return next(
+					new ApiError(
+						`Invalid Interest Rate. Should not be more than ${
+							LOAN_INTEREST * 100
+						}%`,
+						400
+					)
+				);
 			}
+
+			//check if the lender has sufficient balance to create loan offer
+			const checkedLenderWallet = await WalletService.getWalletByUserId(
+				userId!.toString()
+			);
+
+			const balance = checkedLenderWallet.fiatBalance;
+
+			if ( balance < minLoanAmount || balance < maxLoanAmount) {
+					throw new ApiError(
+						"Failed to create loan offer due to insufficent funds.",
+						400
+					);
+				}
+
 			const loanOffer = await LenderService.createLenderLoanOffer(
 				userId!,
-				loanRequestId,
-				terms,
-				interestRate
+				parseInt(minLoanAmount),
+				parseInt(maxLoanAmount),
+				parseInt(terms),
+				parseInt(interestRate)
 			);
 			if (!loanOffer) {
 				return next(new ApiError("Failed to create loan offer", 400));
 			}
-			const approvedLoanRequest = await LenderService.approveLoanRequest(
-				userId!,
-				loanOffer.loanRequestId
-			);
-			if (!approvedLoanRequest) {
-				return next(new ApiError("Failed to approve loan request", 400));
-			}
-			res.status(201).json(approvedLoanRequest);
+
+			res.status(201).send({
+				success: true,
+				message: "Loan Offer created Successfully",
+				data: loanOffer,
+			});
 		} catch (error) {
 			if (error instanceof ApiError) {
 				return next(new ApiError(error.message, error.statusCode));
 			}
 			return next(new ApiError("Internal Server Error", 500));
 		}
+	}
+
+	static async approveLoanRequest(
+		req: AuthRequest,
+		res: Response,
+		next: NextFunction
+	) {
+		const userId = req.userId;
+		const { loanRequestId } = req.body;
+		const approvedLoanRequest = await LenderService.approveLoanRequest(
+			userId!,
+			loanRequestId
+		);
+		if (!approvedLoanRequest) {
+			return next(new ApiError("Failed to approve loan request", 404));
+		}
+		res.status(200).json(approvedLoanRequest);
 	}
 
 	static async getLoanOfferById(
@@ -228,27 +329,27 @@ export default class CreditLendingController {
 					borrowerId,
 					loanRequest.amount!
 				);
-				
+
 				await session.commitTransaction();
-				await NotificationService.notifyTransactionDone(lenderId, borrowerId, transactionData)
+				await NotificationService.notifyTransactionDone(
+					lenderId,
+					borrowerId,
+					transactionData
+				);
 
 				return data;
 			});
 
 			if (loanTransaction) {
-				res
-					.status(200)
-					.json({
-						message: "Loan created successfully",
-						data: loanTransaction,
-					});
+				res.status(200).json({
+					message: "Loan created successfully",
+					data: loanTransaction,
+				});
 			}
 		} catch (error) {
 			if (session.inTransaction()) {
 				await session.abortTransaction();
 			}
-
-			console.log(error);
 
 			if (error instanceof ApiError) {
 				return next(new ApiError(error.message, error.statusCode));
