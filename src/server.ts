@@ -1,22 +1,13 @@
-<<<<<<< HEAD
 import app from './app';
 import { connectDB } from './database/db';
 import { PORT } from './config/constants';
+import WebSocketManager from "./websocket/websocket";
 import { CryptoTransactionService } from './modules/transaction-managemment/services/cryptoTransaction.service';
 
 const startServer = async () => {
   await connectDB();
   await CryptoTransactionService.startTransactionListener();
-=======
-import app from "./app";
-import { connectDB } from "./database/db";
-import { PORT } from "./config/constants";
-import WebSocketManager from "./websocket/websocket";
-
-const startServer = async () => {
-	await connectDB();
->>>>>>> 6f26713 (feat: implement WebSocket manager and notification service for loan requests and transactions)
-
+  
 	const server = app.listen(PORT, () => {
 		console.log(`Gbese API is running on port ${PORT}`);
 	});
