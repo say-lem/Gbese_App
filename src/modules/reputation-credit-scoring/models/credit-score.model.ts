@@ -18,9 +18,6 @@ const creditScoreSchema = new Schema<ICreditScoreDocument>(
 
 		isDeleted: { type: Boolean, default: false },
 	},
-	{
-		_id: false,
-	}
 );
 
 creditScoreSchema.post("findOneAndUpdate", async function (doc) {
