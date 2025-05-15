@@ -1,2 +1,2 @@
 export type LoanRequestStatus = "pending" | "approved" | "rejected";
-export type LoanOfferStatus = "pending" | "accepted" | "expired";
+export type LoanOfferStatus = "open" | "accepted" | "suspended" | "closed";

@@ -20,6 +20,7 @@ const loanSchema = new Schema<ILoanDocument>(
 			{
 				dueDate: { type: Date, required: true },
 				amountDue: { type: Number, required: true },
+				status: {type: String, enum: ["Paid", "Not Paid", "Overdue"], required:true, default: "Not Paid"}
 			}
 		],
 		repaymentProgress: { type: Number, required: true },

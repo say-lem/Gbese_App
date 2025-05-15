@@ -1,0 +1,1 @@
+export type WSMessage = "register"|"loan-request"|"loan-offer"|"payments"

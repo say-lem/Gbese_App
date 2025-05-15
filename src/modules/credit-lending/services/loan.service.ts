@@ -23,41 +23,44 @@ export default class LoanService {
 		if (loanRequest.isDeleted) {
 			throw new ApiError("Loan request has been deleted", 400);
 		}
-		const loan = await LoanRepository.createLoan({
-			borrowerId: loanRequest.userId!.toString(),
-			lenderId: lenderId,
-			principalAmount: loanRequest.amount,
-			interestRate: loanRequest.interestRate,
-			term: loanRequest.term,
-			startDate: new Date(),
-			endDate: (() => {
-				const startDate = new Date();
-				const endDate = new Date(startDate);
-				endDate.setMonth(startDate.getMonth() + loanRequest.term!); // Add the loan term in months
-				return endDate;
-			})(), // Term in months
-			currentHolderId: loanRequest.userId!.toString(),
-			originalBorrowerId: loanRequest.userId!.toString(),
-			repaymentSchedule: (() => {
-				const schedule = [];
-				const monthlyPayment =
-					(loanRequest.amount! * (1 + loanRequest.interestRate!)) /
-					loanRequest.term!;
-				for (let i = 0; i < loanRequest.term!; i++) {
-					const date = new Date();
-					date.setMonth(date.getMonth() + i + 1);
-					schedule.push({
-						dueDate: date,
-						amountDue: monthlyPayment,
-					});
-				}
-				return schedule;
-			})(),
-			repaymentProgress: 0,
-			isOverdue: false,
-			missedPaymentCount: 0,
-			tokenId: "", // Assuming you will handle tokenization separately
-		}, session );
+		const loan = await LoanRepository.createLoan(
+			{
+				borrowerId: loanRequest.userId!.toString(),
+				lenderId: lenderId,
+				principalAmount: loanRequest.amount,
+				interestRate: loanRequest.interestRate,
+				term: loanRequest.term,
+				startDate: new Date(),
+				endDate: (() => {
+					const startDate = new Date();
+					const endDate = new Date(startDate);
+					endDate.setMonth(startDate.getMonth() + loanRequest.term!); // Add the loan term in months
+					return endDate;
+				})(), // Term in months
+				currentHolderId: loanRequest.userId!.toString(),
+				originalBorrowerId: loanRequest.userId!.toString(),
+				repaymentSchedule: (() => {
+					const schedule = [];
+					const monthlyPayment =
+						(loanRequest.amount! * (1 + loanRequest.interestRate!)) /
+						loanRequest.term!;
+					for (let i = 0; i < loanRequest.term!; i++) {
+						const date = new Date();
+						date.setMonth(date.getMonth() + i + 1);
+						schedule.push({
+							dueDate: date,
+							amountDue: monthlyPayment,
+						});
+					}
+					return schedule;
+				})(),
+				repaymentProgress: 0,
+				isOverdue: false,
+				missedPaymentCount: 0,
+				tokenId: "", // Assuming you will handle tokenization separately
+			},
+			session
+		);
 
 		if (!loan) {
 			throw new ApiError("Failed to create loan", 400);
@@ -119,18 +122,30 @@ export default class LoanService {
 			amount,
 			"transfer"
 		);
+		const isOverdue: boolean =
+			loan.repaymentSchedule[
+				loan.repaymentSchedule.length - 1
+			].dueDate.getTime() - new Date().getTime() > 0;
 
-		const UpdatedLoan = await LoanRepository.UpdateLoan(loanId, {
-			repaymentProgress:
-			// updates the percentage loan payment proogress
-				loan.repaymentSchedule.length == 0
-					? 100
-					: Math.round(((loan.repaymentProgress + 1) / loan.repaymentSchedule.length) * 100),
-			repaymentSchedule: loan.repaymentSchedule.slice(1),
-			isOverdue: false,
-			missedPaymentCount: 0,
-			lastPaymentDate: new Date(),
-		}, session);
+
+		const UpdatedLoan = await LoanRepository.UpdateLoan(
+			loanId,
+			{
+				repaymentProgress:
+					// updates the percentage loan payment proogress
+					loan.repaymentSchedule.length == 0
+						? 100
+						: Math.round(
+								((loan.repaymentProgress + 1) / loan.repaymentSchedule.length) *
+									100
+						  ),
+				repaymentSchedule: loan.repaymentSchedule.slice(1),
+				isOverdue: isOverdue,
+				missedPaymentCount: 0,
+				lastPaymentDate: new Date(),
+			},
+			session
+		);
 
 		if (!UpdatedLoan) {
 			throw new ApiError("Unable to update loan", 400);
@@ -139,17 +154,16 @@ export default class LoanService {
 		return { UpdatedTx, UpdatedLoan };
 	}
 
-	static async updateLoanStatus(loanId: string) {
-		// TODO: Implement this method
-		// This method should handle the updating of loan statuses based on certain conditions
-		// It should check the repayment schedule and update the loan status accordingly
-		// You can use the loanRepository to fetch loans and update their status
+	static async deleteLoan(loanId: string) {
 		const loan = await LoanRepository.getLoanById(loanId);
 		if (!loan) {
 			throw new ApiError("Loan data not found", 404);
 		}
 
 		if (loan.repaymentProgress == 100) {
+			await LoanRepository.UpdateLoan(loanId, {
+				isDeleted: true
+			});
 		}
 	}
 }

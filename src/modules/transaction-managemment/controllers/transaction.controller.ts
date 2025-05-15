@@ -55,16 +55,14 @@ export class TransactionController {
 				session.commitTransaction();
 				return loanPayment;
 			});
-
-			res
-				.status(200)
-				.send({
-					success: true,
-					data: {
-						reciept: dueLoanTransaction.UpdatedTx.senderTransaction,
-						loan: dueLoanTransaction.UpdatedLoan,
-					},
-				});
+			res.status(200).send({
+				success: true,
+				data: {
+					reciept: dueLoanTransaction.UpdatedTx.senderTransaction,
+					loan: dueLoanTransaction.UpdatedLoan,
+				},
+			});
+			await LoanService.deleteLoan(loanId);
 		} catch (error) {
 			if (session.inTransaction()) {
 				session.abortTransaction();
