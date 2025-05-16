@@ -6,13 +6,13 @@ import ApiError from "../../../utils/ApiError";
 import {
   generateAccessToken,
   generateRefreshToken,
-  verifyRefreshToken
+  verifyRefreshToken,
 } from "../../../utils/auth.utils";
 import { CryptoTransactionService } from "../../transaction-managemment/services/cryptoTransaction.service";
 import CreditScoreRepository from "../../reputation-credit-scoring/data-access/credit-score.repository";
-import { generateOTP, otpExpiresIn } from '../../../utils/otp.utils';
-import { sendVerificationEmail } from '../../../utils/email.utils';
-import PendingUserModel from '../Models/pendingUser.model';
+import { generateOTP, otpExpiresIn } from "../../../utils/otp.utils";
+import { sendVerificationEmail } from "../../../utils/email.utils";
+import PendingUserModel from "../Models/pendingUser.model";
 
 export class AuthService {
   static async initiateRegistration(userData: {
@@ -23,17 +23,17 @@ export class AuthService {
     role: "user" | "admin" | "lender";
   }) {
     const { username, password, email, phoneNumber, role } = userData;
-  
+
     const allowedRoles = ["user", "admin", "lender"];
     if (!allowedRoles.includes(role)) {
       throw new ApiError("Invalid role provided", 400);
     }
-  
+
     const existing = await UserModel.findOne({
       $or: [{ username }, { email }],
     });
     const pending = await PendingUserModel.findOne({ email });
-  
+
     if (existing) {
       throw new ApiError("Email or username already exists", 409);
     }
@@ -47,11 +47,11 @@ export class AuthService {
         );
       }
     }
-  
+
     const otp = generateOTP();
     const expiresAt = otpExpiresIn();
     const passwordHash = await bcrypt.hash(password, 10);
-  
+
     await PendingUserModel.create({
       username,
       email,
@@ -59,12 +59,12 @@ export class AuthService {
       passwordHash,
       otp,
       expiresAt,
-      role, 
+      role,
     });
-  
+
     await sendVerificationEmail(email, otp);
   }
-  
+
   static async verifyEmailAndCreateUser(email: string, otp: string) {
     const pending = await PendingUserModel.findOne({ email });
     if (!pending) throw new ApiError("No pending registration found", 404);
@@ -101,8 +101,14 @@ export class AuthService {
 
     await PendingUserModel.deleteOne({ email });
 
-    const accessToken = generateAccessToken(savedUser._id.toString(), savedUser.email);
-const refreshToken = generateRefreshToken(savedUser._id.toString(), savedUser.email);
+    const accessToken = generateAccessToken(
+      savedUser._id.toString(),
+      savedUser.email
+    );
+    const refreshToken = generateRefreshToken(
+      savedUser._id.toString(),
+      savedUser.email
+    );
 
     const userResponse: IUserResponse = {
       userId: savedUser._id.toString(),
@@ -123,25 +129,22 @@ const refreshToken = generateRefreshToken(savedUser._id.toString(), savedUser.em
     return { accessToken, refreshToken, user: userResponse };
   }
 
-  static async login(loginData: {
-    email: string;
-    password: string;
-  }): Promise<{
+  static async login(loginData: { email: string; password: string }): Promise<{
     accessToken: string;
     refreshToken: string;
     user: IUserResponse;
   }> {
     const { email, password } = loginData;
-  
+
     const user = (await UserModel.findOne({ email })) as IUserDocument;
     if (!user) throw new ApiError("Invalid email or password", 404);
-  
+
     const isMatch = await bcrypt.compare(password, user.passwordHash);
     if (!isMatch) throw new ApiError("Invalid email or password", 404);
-  
+
     const accessToken = generateAccessToken(user._id.toString(), user.email);
-const refreshToken = generateRefreshToken(user._id.toString(), user.email);
-  
+    const refreshToken = generateRefreshToken(user._id.toString(), user.email);
+
     const userResponse: IUserResponse = {
       userId: user._id.toString(),
       username: user.username,
@@ -157,10 +160,10 @@ const refreshToken = generateRefreshToken(user._id.toString(), user.email);
       isKYCVerified: user.isKYCVerified,
       isEmailVerified: user.isEmailVerified,
     };
-  
+
     return { accessToken, refreshToken, user: userResponse };
   }
-  
+
   static async getUserById(userId: string) {
     const user = await UserModel.findById(userId);
 
@@ -198,7 +201,10 @@ const refreshToken = generateRefreshToken(user._id.toString(), user.email);
   }
 
   static refreshAccessToken(refreshToken: string): string {
-    const payload = verifyRefreshToken(refreshToken) as { userId: string; email: string };
+    const payload = verifyRefreshToken(refreshToken) as {
+      userId: string;
+      email: string;
+    };
     return generateAccessToken(payload.userId, payload.email);
   }
 }
