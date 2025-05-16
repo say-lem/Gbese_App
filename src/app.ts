@@ -8,7 +8,6 @@ import CryptoTransactionRouter from './routes/v1/crypto-transaction.routes';
 import { errorHandler, notFound } from './middleware/error.middleware';
 import cookieParser from 'cookie-parser';
 
-
 const app = express();
 
 app.use(express.json());
@@ -30,7 +29,8 @@ app.use("/api/v1/credit-scores", creditScoreRouter);
 app.use("/api/v1/crypto", CryptoTransactionRouter);
 
 app.get('/', (_req, res) => {
-  res.send('Welcome to Gbese API'); 
+  res.send('Welcome to Gbese API');
+  
 });
 
 app.use(notFound);

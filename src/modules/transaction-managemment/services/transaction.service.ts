@@ -101,4 +101,13 @@ export class TransactionService {
 	static async getTransactionHistory(userId: string) {
 		return TransactionModel.find({ userId }).sort({ timestamp: -1 });
 	}
+	
+	static async getTransactionById(transactionId: string) {
+		const tx = await TransactionModel.findById(transactionId);
+		if (!tx) {
+			throw new ApiError("Transaction not found", 404);
+		}
+		return tx;
+	}
+	
 }

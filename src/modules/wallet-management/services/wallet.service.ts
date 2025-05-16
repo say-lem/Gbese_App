@@ -9,14 +9,15 @@ export class WalletService {
     return wallet;
   }
 
-  static async createWallet(userId: Types.ObjectId) {
-    const existing = await WalletModel.findOne({ userId });
+  static async createWallet(userId: string) {
+    const objectId = new Types.ObjectId(userId);
+    const existing = await WalletModel.findOne({ userId: objectId });
     if (existing) return existing;
-
+  
     const newWallet = new WalletModel({
-      userId,
+      userId: objectId,
       tokenUSDBalance: 0,
-      fiatBalance: 0, 
+      fiatBalance: 0,
     });
     return newWallet.save();
   }
