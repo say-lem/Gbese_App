@@ -13,6 +13,7 @@ import { errorHandler, notFound } from "./middleware/error.middleware";
 import cookieParser from "cookie-parser";
 import session from "express-session";
 import {
+  FRONTEND_URL,
 	NODE_ENV,
 	REDIS_HOST,
 	REDIS_PASSWORD,
@@ -28,7 +29,7 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 app.use(cors({
-  origin:'http://localhost:3002',
+  origin: FRONTEND_URL,
   credentials:true,
 }));
 
