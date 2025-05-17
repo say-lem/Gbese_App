@@ -5,6 +5,7 @@ import transactionRoutes from './routes/v1/transaction.routes';
 import { loanRequestRouter, loanOfferRouter, loanRouter} from './routes/v1/credit-lending.routes';
 import  creditScoreRouter  from './routes/v1/reputation-credit-score.routes';
 import CryptoTransactionRouter from './routes/v1/crypto-transaction.routes';
+import debtTransferRoutes from './routes/v1/debt.routes';
 import { errorHandler, notFound } from './middleware/error.middleware';
 import cookieParser from 'cookie-parser';
 
@@ -18,6 +19,7 @@ app.use(cors());
 
 app.use('/api/v1/users', userRoutes);
 app.use('/api/v1/transactions', transactionRoutes);
+app.use('/api/v1/debt-transfer', debtTransferRoutes);
 
 // credit-lending routers
 app.use("/api/v1/loan-requests", loanRequestRouter);
