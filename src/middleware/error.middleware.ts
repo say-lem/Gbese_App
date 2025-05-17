@@ -3,7 +3,7 @@ import ApiError from "../utils/ApiError";
 
 export const errorHandler = (
 	err: Error,
-	_req: Request,
+	req: Request,
 	res: Response,
 	next: NextFunction
 ) => {
@@ -25,5 +25,5 @@ export const notFound = (req: Request, res: Response, next: NextFunction) => {
 	res
 		.status(404)
 		.json({ success: false, message: "Not found. Invalid Url path" });
-	next();
+		next();
 };
