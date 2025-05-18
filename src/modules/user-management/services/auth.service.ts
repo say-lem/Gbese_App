@@ -180,7 +180,7 @@ export class AuthService {
       walletAddress: user.walletAddress,
       usdcBalance: user.usdcBalance,
       ethBalance: user.ethBalance,
-      fiatBalance: user.fiatBalance,  
+      fiatBalance: user.fiatBalance,
       gbeseTokenBalance: user.gbeseTokenBalance,
       role: user.role,
       isKYCVerified: user.isKYCVerified,

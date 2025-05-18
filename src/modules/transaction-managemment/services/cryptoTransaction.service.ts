@@ -115,27 +115,27 @@ export class CryptoTransactionService {
     amount: string,
     currency: string,
     transactionType: string
-  ): Promise<string> => {
+  ): Promise<string> => {    
     // Validate users exist
     const [fromUser, toUser] = await Promise.all([
       UserModel.findOne({ username: fromUserName }),
       UserModel.findOne({ username: toUserName }),
     ]);
 
-    if (!fromUser || !toUser) {
-      throw new Error("One or both users do not exist");
+    if (!toUser) {
+      throw new Error("User do not exist");
     }
 
     const numAmount = parseFloat(amount);
 
     // Check if user has sufficient balance
-    if (currency === "USDC" && (fromUser.usdcBalance || 0) < numAmount) {
+    if (currency === "USDC" && (fromUser?.usdcBalance || 0) < numAmount) {
       throw new Error("Insufficient USDC balance");
-    } else if (currency === "ETH" && (fromUser.ethBalance || 0) < numAmount) {
+    } else if (currency === "ETH" && (fromUser?.ethBalance || 0) < numAmount) {
       throw new Error("Insufficient ETH balance");
     } else if (
       currency === "GBESE" &&
-      (fromUser.gbeseTokenBalance || 0) < numAmount
+      (fromUser?.gbeseTokenBalance || 0) < numAmount
     ) {
       throw new Error("Insufficient GBESE token balance");
     }
@@ -164,7 +164,7 @@ export class CryptoTransactionService {
     fromUserName: string,
     toAddress: string,
     amount: string,
-    currency: string = "USDC"
+    currency: string
   ): Promise<string> => {
     const GAS_THRESHOLD = ethers.parseEther("0.0002");
     const GAS_TOPUP_AMOUNT = ethers.parseEther("0.0001");
@@ -199,7 +199,7 @@ export class CryptoTransactionService {
       await tx.wait();
       console.log(`Gas funded with tx: ${tx.hash}`);
     }
-
+    
     const usdcWithSigner = usdcContract.connect(walletWithProvider) as ERC20;
     const balance = await usdcContract.balanceOf(walletWithProvider.address);
     const decimals = await usdcContract.decimals();

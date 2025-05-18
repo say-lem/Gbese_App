@@ -9,6 +9,7 @@ import {
 } from "./routes/v1/credit-lending.routes";
 import creditScoreRouter from "./routes/v1/reputation-credit-score.routes";
 import CryptoTransactionRouter from "./routes/v1/crypto-transaction.routes";
+import debtTransferRoutes from './routes/v1/debt.routes';
 import { errorHandler, notFound } from "./middleware/error.middleware";
 import cookieParser from "cookie-parser";
 import session from "express-session";
@@ -29,7 +30,7 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 app.use(cors({
-  origin: [FRONTEND_URL, "http://localhost:3002"],
+  origin: [FRONTEND_URL, "http://localhost:3000"],
   credentials:true,
 }));
 
@@ -61,6 +62,7 @@ app.use(
 
 app.use("/api/v1/users", userRoutes);
 app.use("/api/v1/transactions", transactionRoutes);
+app.use('/api/v1/debt-transfer', debtTransferRoutes);
 
 // credit-lending routers
 app.use("/api/v1/loan-requests", loanRequestRouter);

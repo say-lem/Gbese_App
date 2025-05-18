@@ -3,7 +3,7 @@ import dotenv from "dotenv";
 // Determine the environment and load the corresponding file
 // for local test, it uses `.env.local` while in production uses .env
 const envFile = process.env.NODE_ENV === "production" ? ".env" : ".env.local";
-dotenv.config({ path: envFile });
+dotenv.config({ });
 
 export const getEnvironmentVariable = (
 	key: string,
