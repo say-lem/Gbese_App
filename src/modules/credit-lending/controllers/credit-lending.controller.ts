@@ -222,6 +222,25 @@ export default class CreditLendingController {
 		}
 	}
 
+	static async getAllLoanOffers(
+		req: AuthRequest,
+		res: Response,
+		next: NextFunction
+	) {
+		try {
+			const data = await LoanRepository.getAllLoanOffers();
+			if (!data) {
+				return next(new ApiError("No loan offers found", 404));
+			}
+			res.status(200).json(data);
+		} catch (error) {
+			if (error instanceof ApiError) {
+				return next(new ApiError(error.message, error.statusCode));
+			}
+			return next(new ApiError("Internal Server Error", 500));
+		}
+	}
+
 	static async getLoanOfferById(
 		req: AuthRequest,
 		res: Response,

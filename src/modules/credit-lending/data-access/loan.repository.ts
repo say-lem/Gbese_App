@@ -55,8 +55,22 @@ export default class LoanRepository {
     return loanOffer.save({ session });
   }
 
+  static async getAllLoanOffers() {
+    return LoanOfferModel.find({ isDeleted: false }) 
+      .populate({
+        path: "lenderId",
+        select: "username email", 
+      })
+      .exec();
+  }
+
   static async getLoanOfferById(loanOfferId: string) {
-    return LoanOfferModel.findById(loanOfferId).exec();
+    return LoanOfferModel.findById(loanOfferId)
+    .populate({
+      path: "lenderId",
+      select: "username email", 
+    })
+    .exec();
   }
 
   static async getLoanOfferByLoanRequestId(loanRequestId: string) {
