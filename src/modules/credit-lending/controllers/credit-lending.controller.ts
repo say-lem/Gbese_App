@@ -419,6 +419,26 @@ export default class CreditLendingController {
 		}
 	}
 
+	static async getLoanOfferByLenderId(
+		req: AuthRequest,
+		res: Response,
+		next: NextFunction
+	) {
+		try {
+			const { lenderId } = req.params;
+			const data = await LoanRepository.getLonaOfferByLenderId(lenderId);
+			if (!data) {
+				return next(new ApiError("Loan not found", 404));
+			}
+			res.status(200).json(data);
+		} catch (error) {
+			if (error instanceof ApiError) {
+				return next(new ApiError(error.message, error.statusCode));
+			}
+			return next(new ApiError("Internal Server Error", 500));
+		}
+	}
+
 	static async getUserLoans(
 		req: AuthRequest,
 		res: Response,
