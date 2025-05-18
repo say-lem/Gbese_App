@@ -103,4 +103,14 @@ export class UserController {
 			return next(new ApiError(error.message, error.statusCode || 500));
 		}
 	}
+
+	static async logout(req: AuthRequest, res: Response, next: NextFunction) {
+		try {
+			req.session.destroy(() => {
+				res.status(200).send({ message: "Logout successful" });
+			});
+		} catch (error: any) {
+      return next(new ApiError(error.message, error.statusCode || 500));
+    }
+	}
 }

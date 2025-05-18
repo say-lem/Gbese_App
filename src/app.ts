@@ -29,7 +29,7 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 app.use(cors({
-  origin: FRONTEND_URL,
+  origin: [FRONTEND_URL, "http://localhost:3002"],
   credentials:true,
 }));
 
@@ -45,8 +45,8 @@ redisClient.connect();
 
 app.use(
 	session({
-    name:"gbese",
-		store: new RedisStore({ client: redisClient, prefix: "gbeseapp:" }),
+    name:"gbese.sid",
+		store: new RedisStore({ client: redisClient, prefix: "gbeseSID:" }),
 		secret: SESSION_SECRET,
 		resave: false,
 		saveUninitialized: false,
@@ -54,7 +54,7 @@ app.use(
       httpOnly: true,
       sameSite: true,
 			secure: NODE_ENV === "production",
-			maxAge: 1000 * 60 * 60 * 24, // 1 day
+			maxAge: 1000 * 60 * 30, // 30 mins for session expiration
 		},
 	})
 );
@@ -78,5 +78,6 @@ app.get("/", (_req, res) => {
 app.use(notFound);
 
 app.use(errorHandler);
+
 
 export default app;
