@@ -10,10 +10,13 @@ export default class LoanRepository {
   // Loan Request Methods
   static async createLoanRequest(userId: string, data: Partial<ILoanRequest>, session?: ClientSession) {
     const loanRequest = new LoanRequestModel({
+      loanOfferId: data.loanOfferId,
+      lenderId: data.lenderId,
       userId,
       amount: data.amount,
       interestRate: data.interestRate,
       term: data.term,
+      purpose: data.purpose,
       applicationDate: Date.now(),
       status: "pending",
     });
@@ -55,8 +58,22 @@ export default class LoanRepository {
     return loanOffer.save({ session });
   }
 
+  static async getAllLoanOffers() {
+    return LoanOfferModel.find({ isDeleted: false }) 
+      .populate({
+        path: "lenderId",
+        select: "username email", 
+      })
+      .exec();
+  }
+
   static async getLoanOfferById(loanOfferId: string) {
-    return LoanOfferModel.findById(loanOfferId).exec();
+    return LoanOfferModel.findById(loanOfferId)
+    .populate({
+      path: "lenderId",
+      select: "username email", 
+    })
+    .exec();
   }
 
   static async getLoanOfferByLoanRequestId(loanRequestId: string) {

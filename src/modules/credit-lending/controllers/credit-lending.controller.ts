@@ -20,8 +20,8 @@ export default class CreditLendingController {
 
 		try {
 			const userId = req.user?.userId!;
-			const { amount, term, loanOfferId, purpose } = req.body;
-
+			const { amount, term, loanOfferId, lenderId, purpose } = req.body;
+			
 			const loanRequestTransaction = await session.withTransaction(async () => {
 				// check credit score for maximum loan amount
 				const eligableLoan = await CreditScoreService.checkLoanLimit(
@@ -55,7 +55,7 @@ export default class CreditLendingController {
 
 				//check if the lender has sufficient balance to disburse loan
 				const checkedLenderWallet = await WalletService.getWalletByUserId(
-					loanOffer.lenderId.toString()
+					loanOffer.lenderId._id.toString()
 				);
 				if (checkedLenderWallet.fiatBalance < amount) {
 					await LoanRepository.updateLoanOfferStatus(loanOfferId, "suspended", session);
@@ -65,13 +65,15 @@ export default class CreditLendingController {
 						404
 					);
 				}
-
+				
 				// creates the loan request
 				const loanRequest = await LoanRepository.createLoanRequest(userId!, {
 					amount,
 					term,
 					purpose,
 					interestRate: loanOffer.interestRate,
+					loanOfferId,
+					lenderId
 				}, session);
 				if (!loanRequest) {
 					return next(new ApiError("Failed to create loan request", 400));
@@ -214,6 +216,25 @@ export default class CreditLendingController {
 				message: "Loan Offer created Successfully",
 				data: loanOffer,
 			});
+		} catch (error) {
+			if (error instanceof ApiError) {
+				return next(new ApiError(error.message, error.statusCode));
+			}
+			return next(new ApiError("Internal Server Error", 500));
+		}
+	}
+
+	static async getAllLoanOffers(
+		req: AuthRequest,
+		res: Response,
+		next: NextFunction
+	) {
+		try {
+			const data = await LoanRepository.getAllLoanOffers();
+			if (!data) {
+				return next(new ApiError("No loan offers found", 404));
+			}
+			res.status(200).json(data);
 		} catch (error) {
 			if (error instanceof ApiError) {
 				return next(new ApiError(error.message, error.statusCode));
