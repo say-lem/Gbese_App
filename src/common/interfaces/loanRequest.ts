@@ -4,6 +4,7 @@ export interface ILoanRequest {
     loanOfferId: Types.ObjectId;
     loanRequestId: Types.ObjectId; // Unique identifier for the loan request
     userId:Types.ObjectId; // FK to User (borrower)
+    lenderId:Types.ObjectId; // FK to User (lender)
     amount: number; // Amount requested for the loan
     interestRate: number; // Interest rate for the loan request
     term: number; // Term of the loan request (e.g., repayment period)

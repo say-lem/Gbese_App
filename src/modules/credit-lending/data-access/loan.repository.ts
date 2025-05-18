@@ -11,6 +11,7 @@ export default class LoanRepository {
   static async createLoanRequest(userId: string, data: Partial<ILoanRequest>, session?: ClientSession) {
     const loanRequest = new LoanRequestModel({
       loanOfferId: data.loanOfferId,
+      lenderId: data.lenderId,
       userId,
       amount: data.amount,
       interestRate: data.interestRate,

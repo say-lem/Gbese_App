@@ -8,6 +8,7 @@ interface ILoanRequestDocument extends ILoanRequest, Document {}
 const loanRequestSchema = new Schema<ILoanRequestDocument>({
     loanOfferId: { type: Schema.Types.ObjectId, ref: "LoanOffer", required: true },
     userId: { type: Schema.Types.ObjectId, ref: "User", required: true }, // FK to User (borrower)
+    lenderId: {type: Schema.Types.ObjectId, ref: "Lender", required: true },
     amount: { type: Number, required: true },
     interestRate: { type: Number, required: true },
     term: { type: Number, required: true }, // Term of the loan request (e.g., repayment period)

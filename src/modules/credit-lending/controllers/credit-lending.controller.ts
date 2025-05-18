@@ -20,8 +20,8 @@ export default class CreditLendingController {
 
 		try {
 			const userId = req.user?.userId!;
-			const { amount, term, loanOfferId, purpose } = req.body;
-
+			const { amount, term, loanOfferId, lenderId, purpose } = req.body;
+			
 			const loanRequestTransaction = await session.withTransaction(async () => {
 				// check credit score for maximum loan amount
 				const eligableLoan = await CreditScoreService.checkLoanLimit(
@@ -72,7 +72,8 @@ export default class CreditLendingController {
 					term,
 					purpose,
 					interestRate: loanOffer.interestRate,
-					loanOfferId
+					loanOfferId,
+					lenderId
 				}, session);
 				if (!loanRequest) {
 					return next(new ApiError("Failed to create loan request", 400));
