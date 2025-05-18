@@ -14,13 +14,9 @@ const app = express();
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
-const allowedOrigins = [
-  'http://localhost:3000',
-  'https://gbese-alpha.vercel.app'
-];
 
 app.use(cors({
-  origin: allowedOrigins,
+  origin: 'https://gbese-alpha.vercel.app',
   credentials: true,
 }));
 
