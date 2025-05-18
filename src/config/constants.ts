@@ -3,7 +3,7 @@ import dotenv from "dotenv";
 // Determine the environment and load the corresponding file
 // for local test, it uses `.env.local` while in production uses .env
 const envFile = process.env.NODE_ENV === "production" ? ".env" : ".env.local";
-dotenv.config({ });
+dotenv.config({ path:envFile });
 
 export const getEnvironmentVariable = (
 	key: string,
@@ -51,6 +51,7 @@ export const REDIS_HOST = getEnvironmentVariable("REDIS_HOST");
 export const REDIS_PORT = getEnvironmentVariableNumber("REDIS_PORT");
 export const EMAIL_USER = getEnvironmentVariable("EMAIL_USER");
 export const EMAIL_PASS = getEnvironmentVariable("EMAIL_PASS");
+export const SESSION_SECRET = getEnvironmentVariable("SESSION_SECRET");
 
 // Loan constants
 export const MAX_LOAN_LIMIT = 1000000 // 1 million

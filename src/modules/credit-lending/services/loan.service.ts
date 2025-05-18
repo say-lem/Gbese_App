@@ -112,6 +112,10 @@ export default class LoanService {
 			throw new ApiError("Amount been paid is less than Due Amount", 400);
 		}
 
+		if (loan.repaymentProgress == 100){
+			throw new ApiError("Loan has already been paid completely", 400);
+		}
+
 		if (loan.isDeleted) {
 			throw new ApiError("loan has been deleted", 404);
 		}
@@ -125,23 +129,22 @@ export default class LoanService {
 		const isOverdue: boolean =
 			loan.repaymentSchedule[
 				loan.repaymentSchedule.length - 1
-			].dueDate.getTime() - new Date().getTime() > 0;
+			].dueDate.getTime() - new Date().getTime() < 0;
 
+		const updatedRepaymentSchedule = [...loan.repaymentSchedule];
+		const paidPayments = updatedRepaymentSchedule.filter((payment) => payment.status == "Paid").length
+		if (paidPayments + 1 < updatedRepaymentSchedule.length) {
+			updatedRepaymentSchedule[ paidPayments + 1 ].status = "Paid";
+		}
 
 		const UpdatedLoan = await LoanRepository.UpdateLoan(
 			loanId,
 			{
-				repaymentProgress:
-					// updates the percentage loan payment proogress
-					loan.repaymentSchedule.length == 0
-						? 100
-						: Math.round(
-								((loan.repaymentProgress + 1) / loan.repaymentSchedule.length) *
-									100
-						  ),
-				repaymentSchedule: loan.repaymentSchedule.slice(1),
+				// updates the percentage loan payment proogress
+				repaymentProgress: Math.round(((paidPayments + 1) / loan.repaymentSchedule.length) * 100),
+				repaymentSchedule: updatedRepaymentSchedule,
 				isOverdue: isOverdue,
-				missedPaymentCount: 0,
+				missedPaymentCount: updatedRepaymentSchedule.filter((payment) => payment.status == "Overdue").length,
 				lastPaymentDate: new Date(),
 			},
 			session
