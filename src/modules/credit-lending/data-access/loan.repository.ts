@@ -10,10 +10,12 @@ export default class LoanRepository {
   // Loan Request Methods
   static async createLoanRequest(userId: string, data: Partial<ILoanRequest>, session?: ClientSession) {
     const loanRequest = new LoanRequestModel({
+      loanOfferId: data.loanOfferId,
       userId,
       amount: data.amount,
       interestRate: data.interestRate,
       term: data.term,
+      purpose: data.purpose,
       applicationDate: Date.now(),
       status: "pending",
     });

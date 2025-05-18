@@ -55,7 +55,7 @@ export default class CreditLendingController {
 
 				//check if the lender has sufficient balance to disburse loan
 				const checkedLenderWallet = await WalletService.getWalletByUserId(
-					loanOffer.lenderId.toString()
+					loanOffer.lenderId._id.toString()
 				);
 				if (checkedLenderWallet.fiatBalance < amount) {
 					await LoanRepository.updateLoanOfferStatus(loanOfferId, "suspended", session);
@@ -65,13 +65,14 @@ export default class CreditLendingController {
 						404
 					);
 				}
-
+				
 				// creates the loan request
 				const loanRequest = await LoanRepository.createLoanRequest(userId!, {
 					amount,
 					term,
 					purpose,
 					interestRate: loanOffer.interestRate,
+					loanOfferId
 				}, session);
 				if (!loanRequest) {
 					return next(new ApiError("Failed to create loan request", 400));
