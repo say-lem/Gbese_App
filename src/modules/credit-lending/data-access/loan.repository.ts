@@ -58,12 +58,12 @@ export default class LoanRepository {
     return loanOffer.save({ session });
   }
 
-  static async getLonaOfferByLenderId(lenderId:string) {
-    return LoanRequestModel.findById({ lenderId }) 
-      .populate({
-        path: "lenderId",
-        select: "username email", 
-      })
+  static async getAllLoanRequest() {
+    return LoanRequestModel.find( ) 
+      // .populate({
+      //   path: "lenderId",
+      //   select: "username email", 
+      // })
       .exec();
   }
 

@@ -419,14 +419,14 @@ export default class CreditLendingController {
 		}
 	}
 
-	static async getLoanOfferByLenderId(
+	static async getAllLoanRequest(
 		req: AuthRequest,
 		res: Response,
 		next: NextFunction
 	) {
 		try {
 			const { lenderId } = req.params;
-			const data = await LoanRepository.getLonaOfferByLenderId(lenderId);
+			const data = await LoanRepository.getAllLoanRequest(); 
 			if (!data) {
 				return next(new ApiError("Loan not found", 404));
 			}
