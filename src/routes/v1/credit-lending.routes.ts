@@ -15,6 +15,7 @@ loanRequestRouter.post("/reject", CreditLendingController.rejectLoanRequest);
 loanRequestRouter.get("/user/lender", authenticate, CreditLendingController.getAllLoanRequest)
 loanRequestRouter.get("/:loanRequestId", authenticate, CreditLendingController.getLoanRequest);
 loanRequestRouter.get("/user/:userId", authenticate, CreditLendingController.getUserLoanRequests);
+loanRequestRouter.get("/lender/:lenderId", authenticate, CreditLendingController.getLoanRequestbyLenderId);
 
 // Loan Offer routes
 loanOfferRouter.post("/", authenticate, CreditLendingController.createLenderLoanOffer);

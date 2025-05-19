@@ -3,7 +3,7 @@ import { ILoan } from "./../../../common/interfaces/loan";
 import { ILoanOffer } from "../../../common/interfaces/loanOffer";
 import { ILoanRequest } from "../../../common/interfaces/loanRequest";
 import { paginate } from "../../../utils/Paginate";
-import { ClientSession } from "mongoose";
+import { ClientSession, Types } from "mongoose";
 import { LoanQueryFilter } from "./../../../common/interfaces/loan";
 
 export default class LoanRepository {
@@ -60,12 +60,18 @@ export default class LoanRepository {
 
   static async getAllLoanRequest() {
     return LoanRequestModel.find( ) 
-      // .populate({
-      //   path: "lenderId",
-      //   select: "username email", 
-      // })
       .exec();
   }
+
+  static async getLoanRequestsByLenderId(lenderId: string) {
+    if (!Types.ObjectId.isValid(lenderId)) return [];
+  
+    return LoanRequestModel.find({
+      lenderId: new Types.ObjectId(lenderId),
+      isDeleted: false, 
+    }).exec();
+  }
+  
 
   static async getAllLoanOffers() {
     return LoanOfferModel.find({ isDeleted: false }) 
